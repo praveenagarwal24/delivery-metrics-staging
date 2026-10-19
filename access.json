@@ -1,0 +1,18 @@
+{
+  "users": [
+    { "email": "praveen@spyne.ai", "role": "admin" },
+    { "email": "kishor@spyne.ai", "role": "viewer" },
+    { "email": "nitin.kumar@spyne.ai", "role": "viewer" },
+    { "email": "ranbir.manoranjan@spyne.ai", "role": "viewer" },
+    { "email": "anuj@spyne.ai", "role": "viewer" },
+    { "email": "akshay.bajaj@spyne.ai", "role": "viewer" },
+    { "email": "shreyank.jyoti@spyne.ai", "role": "viewer" },
+    { "email": "madhav.prakash@spyne.ai", "role": "viewer" },
+    { "email": "ketan.sharma@spyne.ai", "role": "viewer" },
+    { "email": "vishal.pundhir@spyne.ai", "role": "viewer" },
+    { "email": "kunal.shekhawat@spyne.ai", "role": "viewer" },
+    { "email": "anshuman.kukreti@spyne.ai", "role": "viewer" },
+    { "email": "navdeep.sisodia@spyne.ai", "role": "viewer" },    
+    { "email": "tejendra.rajawat@spyne.ai", "role": "viewer" }    
+  ]
+}

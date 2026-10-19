@@ -1,0 +1,2615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delivery Metrics — Images</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;450;500;600;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{
+  --canvas:#ECEFEE; --panel:#FFFFFF; --panel-sunk:#F4F6F5;
+  --ink:#0F1E1C; --ink-2:#334744; --muted:#6B7B78; --hair:#DCE3E1; --hair-strong:#C4CFCC;
+  --teal:#12706B; --teal-soft:#E3EFEE; --deep:#0C2E2C;
+  --up:#1B7A46; --down:#B3261E; --flat:#7A8683; --orange:#D97706;
+  --s1:#12706B; --s2:#2C5F8A; --s3:#7A3E6D; --s4:#A5761B; --s5:#55636B;
+  --r-card:10px; --r-panel:14px; --r-pill:999px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--canvas); color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:14px; line-height:1.45; -webkit-font-smoothing:antialiased;
+}
+.num{font-variant-numeric:tabular-nums lining-nums}
+button{font:inherit;color:inherit;cursor:pointer}
+select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1520px;margin:0 auto;padding:0 24px 64px}
+
+/* ---------- masthead ---------- */
+.mast{background:var(--deep);color:#E7EFEE;position:sticky;top:0;z-index:40;
+  transition:box-shadow .16s ease}
+.mast.compact{box-shadow:0 6px 18px rgba(12,46,44,.22)}
+.mast.compact .mast-in{padding-top:11px}
+.mast.compact h1{font-size:17px}
+.mast.compact p{display:none}
+.mast.compact .prods{padding-top:9px}
+.mast.compact .prod{padding:7px 18px 9px}
+.mast-in{max-width:1520px;margin:0 auto;padding:20px 24px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-end;justify-content:space-between}
+.mast h1{margin:0;font-size:21px;font-weight:600;letter-spacing:-.01em;color:#fff}
+.mast p{margin:3px 0 0;font-size:13px;color:#9DB4B1;max-width:62ch}
+.sync{display:flex;align-items:center;gap:14px;padding-bottom:14px;line-height:1}
+.sync-txt{font-size:12px;color:#9DB4B1;display:inline-flex;align-items:center;line-height:1}
+.btn{background:#17423F;border:1px solid #2C5A56;color:#DCEAE8;padding:8px 16px;border-radius:var(--r-pill);font-size:13px;font-weight:500;line-height:1}
+.btn:hover{background:#1E514D}
+.btn[disabled]{opacity:.55;cursor:progress}
+.dot{width:7px;height:7px;border-radius:50%;background:#3FBF8F;display:inline-block;margin-right:7px;flex:0 0 auto}
+.dot.err{background:#E0705F}
+
+/* product tabs */
+.prods{max-width:1520px;margin:0 auto;padding:16px 24px 0;display:flex;gap:2px}
+.prod{background:transparent;border:0;border-bottom:2px solid transparent;padding:9px 18px 11px;color:#8FA9A6;font-weight:500;display:flex;align-items:center;gap:9px}
+.prod:hover{color:#D6E5E3}
+.prod[aria-selected="true"]{color:#fff;border-bottom-color:#3FBF8F}
+.prod .tag{font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:2px 7px;border-radius:var(--r-pill);background:#1D4A47;color:#8FB7B3}
+.prod[aria-selected="true"] .tag{background:#2A5F5B;color:#BFE0DC}
+
+/* ---------- controls ---------- */
+.controls{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;
+  position:sticky;top:var(--mastH,152px);z-index:30;background:var(--canvas);
+  margin:0 -24px;padding:16px 24px 15px;border-bottom:1px solid var(--hair-strong)}
+@media (max-height:620px){.mast,.controls{position:static}}
+.ctl{display:flex;align-items:center;gap:8px}
+.ctl > span{font-size:12.5px;color:var(--muted)}
+.seg{display:inline-flex;background:var(--panel-sunk);border:1px solid var(--hair);border-radius:var(--r-pill);padding:2px}
+.seg button{border:0;background:transparent;padding:5px 13px;border-radius:var(--r-pill);font-size:12.5px;color:var(--ink-2);font-weight:450}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(15,30,28,.12)}
+select.inp{background:var(--panel);border:1px solid var(--hair-strong);border-radius:7px;padding:6px 10px;font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{border:1px solid var(--hair-strong);background:var(--panel);border-radius:var(--r-pill);padding:4px 11px;font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+.chip-sm{padding:3px 10px;font-size:12px}
+.chip-r{display:inline-flex;align-items:center;gap:6px}
+.chip-r[aria-pressed="true"] .swatch{box-shadow:0 0 0 1.5px rgba(255,255,255,.6)}
+.sec-tools{margin-left:auto;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.chip[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:500}
+.linky{background:none;border:0;color:var(--teal);font-size:12.5px;text-decoration:underline;padding:0}
+
+/* ---------- section headings ---------- */
+.sec{margin:30px 0 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.sec h2{margin:0;font-size:15px;font-weight:600;letter-spacing:-.005em}
+.sec .note{font-size:12.5px;color:var(--muted)}
+
+/* ---------- glance grid ---------- */
+.lanes{display:grid;grid-template-columns:repeat(var(--lanes,3),minmax(0,1fr));gap:14px 18px;align-items:stretch}
+.lane-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 2px 2px;align-self:end}
+.lane-hd h3{margin:0;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.swatch{width:9px;height:9px;border-radius:2px;display:inline-block}
+.lane-hd .sub{font-size:12px;color:var(--muted)}
+.cards{display:grid;gap:10px}
+.card{background:var(--panel);border:1px solid var(--hair);border-radius:var(--r-card);padding:12px 14px 8px;
+  display:flex;flex-direction:column;height:100%}
+.card .spark{margin-top:auto}
+.card-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.card-top .name{font-size:13px;font-weight:600;color:var(--ink-2)}
+.val{font-size:23px;font-weight:600;letter-spacing:-.02em}
+.delta{font-size:11.5px;font-weight:600;padding:2px 7px;border-radius:var(--r-pill);white-space:nowrap}
+.delta.up{background:#E4F1E9;color:var(--up)}
+.delta.down{background:#FBE7E5;color:var(--down)}
+.delta.flat{background:var(--panel-sunk);color:var(--flat)}
+.card .cmp{font-size:11.5px;color:var(--muted);margin-top:-2px}
+.spark{margin-top:6px}
+
+/* ---------- panels ---------- */
+.panel{background:var(--panel);border:1px solid var(--hair);border-radius:var(--r-panel);padding:18px}
+.panel-hd{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.panel-hd h3{margin:0;font-size:14px;font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px}
+.legend span{font-size:12px;color:var(--ink-2);display:flex;align-items:center;gap:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+
+/* ---------- tables ---------- */
+table{width:100%;border-collapse:collapse}
+th,td{text-align:right;padding:8px 10px;font-size:12.5px;border-bottom:1px solid var(--hair)}
+th{font-size:11.5px;color:var(--muted);font-weight:600;background:var(--panel-sunk);position:sticky;top:0}
+th:first-child,td:first-child{text-align:left}
+tbody tr.clickable:hover{background:var(--teal-soft);cursor:pointer}
+tbody tr[aria-selected="true"]{background:var(--teal-soft);box-shadow:inset 2px 0 0 var(--teal)}
+.scroll{overflow:auto;max-height:460px;border:1px solid var(--hair);border-radius:var(--r-card)}
+.heat{border-radius:5px;padding:6px 4px;display:block;width:100%;text-align:center;font-weight:500}
+.matrix{table-layout:fixed}
+.matrix th,.matrix td{text-align:center;padding:6px 7px}
+.matrix th:first-child,.matrix td:first-child{text-align:left;width:150px;padding-left:12px}
+.hide-x{border:0;background:none;color:var(--muted);font-size:16px;line-height:1;padding:0 2px;border-radius:4px;opacity:0;transition:opacity .12s}
+.card:hover .hide-x,.hide-x:focus-visible{opacity:1}
+.hide-x:hover{color:var(--ink);background:var(--panel-sunk)}
+.state--full{min-height:calc(100vh - 300px);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.legend-btn{display:flex;align-items:center;gap:7px;background:none;border:0;padding:3px 2px;font-size:12.5px;color:var(--ink-2)}
+.legend-btn[aria-pressed="false"]{opacity:.4;text-decoration:line-through}
+.rec-tabs{display:flex;gap:2px}
+.rec-tabs button{border:0;background:transparent;padding:6px 13px;border-radius:7px;font-size:13px;color:var(--muted)}
+.rec-tabs button[aria-pressed="true"]{background:var(--teal-soft);color:var(--teal);font-weight:600}
+.search{border:1px solid var(--hair-strong);border-radius:7px;padding:6px 10px;font-size:13px;width:190px;font-family:inherit}
+
+/* ---------- states ---------- */
+.state{border:1px dashed var(--hair-strong);border-radius:var(--r-panel);padding:40px 28px;text-align:center;color:var(--muted);background:var(--panel-sunk)}
+.state h3{margin:0 0 6px;color:var(--ink);font-size:15px;font-weight:600}
+.state p{margin:0 auto;max-width:52ch;font-size:13px}
+.state .btn{background:var(--teal);border-color:var(--teal);color:#fff;margin-top:16px}
+.state .btn:hover{background:#0E5D59}
+.soon{background:repeating-linear-gradient(135deg,#F4F6F5,#F4F6F5 14px,#EFF3F2 14px,#EFF3F2 28px)}
+.tip{position:fixed;pointer-events:none;background:var(--deep);color:#EAF2F1;padding:7px 10px;border-radius:7px;font-size:12px;opacity:0;transition:opacity .1s;z-index:50;white-space:nowrap}
+.tip b{color:#fff}
+.gate{min-height:calc(100vh - 96px);display:flex;align-items:center;justify-content:center;padding:24px}
+.gate[hidden]{display:none}
+.gate-card{background:var(--panel);border:1px solid var(--hair);border-radius:var(--r-panel);
+  padding:40px 36px;max-width:430px;width:100%;text-align:center}
+.gate-card h2{margin:0 0 8px;font-size:19px;font-weight:600}
+.gate-card p{margin:0 0 22px;font-size:13.5px;color:var(--muted);line-height:1.55}
+.gsi-slot{display:flex;justify-content:center;min-height:44px}
+.gate-err{margin:18px 0 0!important;color:var(--down);font-size:13px}
+.who{display:flex;align-items:center;gap:10px;line-height:1}
+.who:not(:empty)::after{content:"";width:1px;height:16px;background:#2C5A56;margin-left:4px}
+.who-mail{font-size:12px;color:#9DB4B1;line-height:1}
+.role{font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:4px 9px;border-radius:var(--r-pill);
+  background:#2A5F5B;color:#BFE0DC;text-transform:uppercase;line-height:1}
+.role.admin{background:#3FBF8F;color:#0C2E2C}
+.linky-dark{background:none;border:0;color:#9DB4B1;font-size:12px;text-decoration:underline;padding:0;line-height:1}
+.linky-dark:hover{color:#DCEAE8}
+.admin-tag{font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:2px 8px;border-radius:var(--r-pill);
+  background:var(--teal-soft);color:var(--teal);text-transform:uppercase;margin-left:8px}
+.rlegend{display:flex;flex-wrap:wrap;gap:5px;padding:0 4px 11px}
+.rchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--hair-strong);background:var(--panel);
+  border-radius:var(--r-pill);padding:3px 9px;font-size:11.5px;color:var(--ink-2);line-height:1}
+.rchip[aria-pressed="false"]{opacity:.42}
+.rchip[aria-pressed="false"] .swatch{background:var(--flat)!important}
+.rgrid{display:grid;grid-template-columns:repeat(var(--cols,3),minmax(0,1fr));gap:18px;align-items:stretch}
+.rcard{display:flex;flex-direction:column}
+.progs{list-style:none;margin:10px 0 4px;padding:0;max-height:none}
+.progs li{padding:9px 0;border-top:1px solid var(--hair);font-size:13px;color:var(--ink-2);line-height:1.45}
+.progs li:first-child{border-top:0}
+.progs li::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;
+  background:var(--teal);margin-right:9px;vertical-align:2px}
+@media (max-width:900px){.rgrid{grid-template-columns:1fr}}
+.evs{list-style:none;margin:0;padding:0;max-height:none}
+.ev{display:flex;gap:16px;padding:11px 0;border-top:1px solid var(--hair)}
+.ev:first-child{border-top:0}
+.ev-when{flex:0 0 58px;font-size:12px;color:var(--muted);padding-top:2px}
+.ev-body{flex:1 1 auto;min-width:0}
+.ev-tag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+  padding:2px 8px;border-radius:var(--r-pill);background:var(--panel-sunk);color:var(--ink-2)}
+.ev-body p{margin:5px 0 0;font-size:13px;color:var(--ink-2);line-height:1.5}
+.rcard{background:var(--panel);border:1px solid var(--hair);border-radius:var(--r-panel);padding:16px 18px 10px}
+.rcard-hd{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.rcard-hd h3{margin:0;font-size:14.5px;font-weight:600}
+.rcard-rate{font-size:19px;font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.rcard-sub{display:flex;justify-content:space-between;gap:12px;margin:3px 0 12px;
+  font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.rsns{list-style:none;margin:0;padding:0;max-height:300px;overflow-y:auto}
+.rsns--all{max-height:none;overflow:visible}
+.rsn{padding:7px 0 9px;border-top:1px solid var(--hair)}
+.rsn:first-child{border-top:0}
+.rsn-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.rsn-lab{font-size:12.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rsn-num{font-size:12px;color:var(--muted);white-space:nowrap}
+.rsn-dot{opacity:.5}
+.rsn-track{margin-top:6px;height:5px;border-radius:3px;background:var(--panel-sunk);overflow:hidden}
+.rsn-track i{display:block;height:100%;border-radius:3px}
+.pipe-bar{display:flex;height:30px;border-radius:7px;overflow:hidden;gap:2px;margin:6px 0 10px}
+.pipe-bar i{display:block;height:100%;min-width:3px}
+.pipe-leg{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0 0 6px;font-size:12px;color:var(--ink-2)}
+.pipe-leg span{display:inline-flex;align-items:center;gap:6px}
+.pipe-leg .swatch{width:10px;height:10px;border-radius:3px;display:inline-block}
+.pipe-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ptab{width:100%;min-width:560px;border-collapse:collapse;font-size:12.5px}
+.pipe-card .rcard-hd{flex-wrap:wrap}
+.rgrid.pipe-grid{grid-template-columns:minmax(0,1fr)}
+.ptab th{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500;text-align:right;padding:6px 8px;border-bottom:1px solid var(--hair-strong)}
+.ptab th:first-child,.ptab td:first-child{text-align:left}
+.ptab td{padding:7px 8px;border-bottom:1px solid var(--hair);text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.ptab tr.sub td{color:var(--muted);font-size:12px;padding-top:4px;padding-bottom:4px}
+.ptab tr.sub td:first-child{padding-left:26px}
+.ptab tr.tot td{font-weight:600;color:var(--ink);border-top:1px solid var(--hair-strong);border-bottom:0}
+.ptab .over{color:var(--down);font-weight:600}
+.ptab .peak{font-weight:600;color:var(--ink)}
+.pipe-mix{display:flex;flex-wrap:wrap;gap:6px 22px;margin:12px 0 4px;font-size:12px;color:var(--muted)}
+.pipe-mix b{color:var(--ink-2);font-weight:600}
+.foot{margin-top:34px;padding-top:16px;border-top:1px solid var(--hair-strong);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px}
+.foot a{color:var(--teal)}
+@media (max-width:1080px){.grid2{grid-template-columns:1fr}
+  .lanes{grid-template-columns:repeat(var(--lanes,3),minmax(250px,1fr));overflow-x:auto;padding-bottom:6px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="mast">
+  <div class="mast-in">
+    <div>
+      <h1>Delivery Metrics</h1>
+      <p>Turnaround, SLA and fulfilment for image delivery — read at VIN, rooftop and region level.</p>
+    </div>
+    <div class="sync">
+      <span class="who" id="who"></span>
+      <span class="sync-txt" id="syncTxt"></span>
+      <button class="btn" id="refreshBtn">Refresh data</button>
+    </div>
+  </div>
+  <nav class="prods" id="prodTabs" role="tablist" aria-label="Product line"></nav>
+</header>
+
+<section class="gate" id="gate" hidden>
+  <div class="gate-card">
+    <h2>Delivery Metrics</h2>
+    <p id="gateMsg">Sign in with your Spyne account to continue.</p>
+    <div id="gsiBtn" class="gsi-slot"></div>
+    <p class="gate-err" id="gateErr" hidden></p>
+  </div>
+</section>
+<main class="wrap" id="main"></main>
+<div class="tip" id="tip"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   CONFIG — add sheets here as they land in the workbook.
+   Set status:'live' on a product once its sheets exist.
+   ============================================================ */
+const SHEET_ID = "16vFElbOV8Awd63R6-WlsNdAScWNE18xGUPFkzE0GN7c";
+
+/* ---- Sign-in ------------------------------------------------------------
+   These are DEFAULTS. config.json, sitting next to this file in the repo,
+   overrides every one of them at load:
+     { "clientId": "....apps.googleusercontent.com",
+       "allowedDomains": ["spyne.ai","spyne.co.in"],
+       "admins": ["praveen@spyne.ai"],
+       "contact": "praveen@spyne.ai" }
+   Keeping them there means this file can be replaced wholesale without
+   re-pasting anything. If config.json is missing, the values below are used.
+   NOTE: this gates the UI. It is not a security boundary - the file is public
+   and the sheets stay link-readable. Don't treat it as access control.        */
+const CONFIG_FILE      = "config.json";
+let   GOOGLE_CLIENT_ID = "";
+let   ALLOWED_DOMAINS  = ["spyne.ai","spyne.co.in"];
+let   ADMINS           = ["praveen@spyne.ai"];     // always admin, whatever access.json says
+/* Per-person access lives in access.json, sitting next to this file in the repo,
+   so adding someone is a small commit rather than an edit to this whole page:
+     { "users": [ {"email":"praveen@spyne.ai","role":"admin"},
+                  {"email":"someone@spyne.ai","role":"viewer"} ] }
+   role is "admin" or "viewer" (anything else reads as viewer).
+   If the file is missing, the dashboard falls back to letting any
+   ALLOWED_DOMAINS address in — so nothing breaks before you create it.        */
+const ACCESS_FILE      = "access.json";
+/* One tab holds the programme list for every product; column A maps the row to
+   a product tab. Add spellings here if the sheet starts using new ones. */
+const PROGRAMS_SHEET   = "programs";
+const PROGRAM_PRODUCTS = { images:["image","images"], spin:["360","360 spin","spin"], video:["video"] };
+let   ACCESS_CONTACT   = "praveen@spyne.ai";       // where access requests are sent
+/* Sign-in logging. A Google Form is the write endpoint - the page posts each
+   sign-in to it and the responses land in a tab of the workbook, which the
+   admin panel reads back. Set this block in config.json:
+     "loginLog": {
+       "formUrl": "https://docs.google.com/forms/d/e/FORM_ID/formResponse",
+       "fields":  { "email": "entry.111111", "role": "entry.222222" },
+       "sheetName": "Form Responses 1"
+     }
+   Leave it out and the logging simply doesn't run.                            */
+let   LOGIN_LOG        = null;
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/edit";
+
+/* agg says how a metric combines across regions: "mean" for rates (the default),
+   "sum" for totals, "ratio" for one total divided by another.
+   needs lists the sheet columns required - a metric with a missing column is
+   simply not offered, so cost appears on its own once the columns land.        */
+/* tip names the count columns behind a rate for its hover tooltip: n is the
+   population, bad the part that missed. A sheet without them shows the value only. */
+function mkMetrics(lastId,lastLabel,costLabel,slaHrs,combo){
+  const h=slaHrs||6;
+  /* total = the fulfilment total; SKUs in it but not in the SLA total were received under 6h ago and not yet judged (MTD only). */
+  const slaTip={ n:"sla_checked", bad:"sla_breached", total:(combo&&combo.pendingNote)?combo.den:null, nLabel:"Total", goodLabel:"Within SLA", badLabel:"SLA breach" };
+  const tatTip={ n:"tat_measured", bad:"tat_over_sla", nLabel:"Measured", goodLabel:"Within "+h+"h", badLabel:"Over "+h+"h" };
+  return [
+    { id:"sla_pct",     label:"SLA < "+h+" hrs", kind:"pct", better:"high", tip:slaTip },
+    { id:"p99_tat_hrs", label:"TAT (P99)", kind:"hrs", better:"low", tip:tatTip },
+    { id:"p95_tat_hrs", label:"TAT (P95)", kind:"hrs", better:"low", tip:tatTip },
+    { id:lastId,        label:lastLabel,   kind:"pct", better:"high", combo:combo||null },
+    /* Cost per unit only. Total cost and volume are still queried - the ratio
+       needs both - but neither is offered as a card or chart of its own. */
+    { id:"cost_per_image", label:costLabel||"Cost / image", kind:"inr2", better:"low", agg:"ratio", src:"bq" }
+  ];
+}
+
+const PRODUCTS = [
+  { id:"images", label:"Images", status:"live",
+    metrics:mkMetrics("fulfillment_pct","Fulfilment","Cost / image",6,
+      /* pendingNote: SLA total = this total minus SKUs received <6h ago (cards 12998/13000), so the MTD gap can be explained */
+      { num:"total_out", den:"total_in", numLabel:"Delivered", denLabel:"Total", pendingNote:true }),
+    quality:{ sheet:"image_qs", title:"Quality Chart" },
+    incidents:{ sheet:"Image_ff", title:"What affected delivery" },
+    /* Stage-by-stage TAT, last 4 complete weeks (card 13272 -> images_pipeline): one row per
+       period (L4W, W-1..W-4) x segment x region_set. Stages add up to End-to-End per SKU. */
+    pipeline:{ sheet:"images_pipeline", slaHrs:6 },
+    lanes:[
+      { id:"vin",    label:"VIN",     sheet:"images_vin",    color:"var(--s1)", blurb:"Every vehicle delivered" },
+      /* tipUnit: card 13001 counts rooftops in its SLA/TAT columns, not SKUs */
+      { id:"rt",     label:"Rooftop", sheet:"images_rt",     color:"var(--s2)", blurb:"Rolled up per dealership", tipUnit:"rooftops" },
+      { id:"region", label:"Region",  sheet:"images_region", color:"var(--s3)", blurb:"Split by delivery region", dim:"region" }
+    ]},
+  /* vfToggle: each lane sheet has a <sheet>_vf twin that includes Validation Failed spins
+     (360-tracker-dashboard sync-sheets.js). The plain sheets leave them out and are the default. */
+  { id:"spin", label:"360", status:"live", vfToggle:true,
+    metrics:mkMetrics("delivery_pct","Fulfilment","Cost / spin",6,
+      { num:"total_delivered", den:"total_vin", numLabel:"Delivered", denLabel:"Total" }),
+    quality:{ sheet:"360_qs", title:"Quality Chart" },
+    incidents:{ sheet:"360_ff", title:"What affected delivery" },
+    /* All three read 360_issue and split on its category column. */
+    panels:[
+      { sheet:"360_issue", cat:"QC Failed", title:"QC Failed reasons",
+        subtitle:"Blocker severity issues", tone:"red", kind:"reasons", pctWhole:true },
+      { sheet:"360_issue", cat:"Validation Failed", title:"Validation Failed reasons",
+        subtitle:"Failure reasons", tone:"red", kind:"reasons", pctWhole:true },
+      { sheet:"360_issue", cat:"Tech & AI Failure", title:"Tech & AI Failure reasons",
+        subtitle:"Failure reasons", tone:"amber", kind:"reasons", pctWhole:true }
+    ],
+    lanes:[
+      { id:"spin",   label:"Spin",    sheet:"360_spin",   color:"var(--s1)", blurb:"Every spin delivered" },
+      { id:"rt",     label:"Rooftop", sheet:"360_rt",     color:"var(--s2)", blurb:"Rolled up per dealership" },
+      { id:"region", label:"Region",  sheet:"360_region", color:"var(--s3)", blurb:"Split by delivery region", dim:"region" }
+    ]},
+  { id:"video", label:"Video", status:"live", metrics:mkMetrics("fulfillment_pct","Fulfilment","Cost / video",6,
+      /* pendingNote: with video-metrics#2, SLA total = this total minus videos pending QC <6h, so the MTD gap can be explained */
+      { num:"delivered_videos", den:"total_videos", numLabel:"Delivered", denLabel:"Total", pendingNote:true }),
+    quality:{ sheet:"video_qs", title:"Quality Chart" },
+    panels:[
+      { sheet:"video_ff",  title:"Fulfilment failure reasons", subtitle:"Failure reasons",
+        tone:"red", kind:"reasons", pctWhole:true, noCap:true },
+      { sheet:"video_sla", title:"SLA incidents", kind:"table" }
+    ],
+    lanes:[
+      { id:"vin",    label:"VIN",     sheet:"video_vin",    color:"var(--s1)", blurb:"Every vehicle delivered" },
+      /* tipUnit: video-metrics writes rooftop counts (not videos) to video_rt's SLA/TAT count columns */
+      { id:"rt",     label:"Rooftop", sheet:"video_rt",     color:"var(--s2)", blurb:"Rolled up per dealership", tipUnit:"rooftops" },
+      { id:"region", label:"Region",  sheet:"video_region", color:"var(--s3)", blurb:"Split by delivery region", dim:"region" }
+    ]}
+];
+
+const SEGMENTS = [
+  { id:"all",       label:"All segments", prefix:"" },
+  { id:"ent",       label:"Enterprise",   prefix:"ent_" },
+  { id:"mid",       label:"Mid-market",   prefix:"mid_" },
+  { id:"resellers", label:"Resellers",    prefix:"resellers_" },
+  { id:"smb",       label:"SMB",          prefix:"smb_" }
+];
+
+const METRICS = PRODUCTS[0].metrics;
+/* Each product names its own metrics — images reports fulfilment, 360 reports delivery. */
+function hasCol(name){
+  const ls=lanesOf();
+  for(let i=0;i<ls.length;i++){
+    const rows=raw(ls[i].id);
+    for(let j=0;j<rows.length;j++) if(rows[j].v[name]!=null) return true;
+  }
+  return false;
+}
+function metricsOf(){
+  const base=(PRODUCTS.find(p=>p.id===state.product)||{}).metrics || METRICS;
+  return base.filter(m=> m.src==="bq" ? !!state.cost : (!m.needs || m.needs.every(hasCol)) );
+}
+function metricById(id){ const l=metricsOf(); return l.find(m=>m.id===id) || l[0]; }
+/* The same measure has a different column name per product (fulfillment_pct vs
+   delivery_pct), so match on the label to keep the selection when tabs change. */
+function labelOfMetricId(id){
+  for(let i=0;i<PRODUCTS.length;i++){
+    const ms=PRODUCTS[i].metrics;
+    if(!ms) continue;
+    const m=ms.find(x=>x.id===id);
+    if(m) return m.label;
+  }
+  return null;
+}
+function remapMetric(id){
+  const ms=metricsOf();
+  if(ms.some(m=>m.id===id)) return id;
+  const lab=labelOfMetricId(id);
+  const hit=lab ? ms.find(m=>m.label===lab) : null;
+  return hit ? hit.id : ms[0].id;
+}
+
+const SERIES_COLORS = ["var(--s1)","var(--s2)","var(--s3)","var(--s4)","var(--s5)"];
+
+/* ============================================================ */
+const state = {
+  product:"images", granularity:"month", segment:"all", includeVF:false,
+  regions:{}, regionsInit:{},
+  trendMetric:"sla_pct", trendSplit:"lane", colorMode:"auto", scale:"linear", chart:"line", hiddenCards:new Set(["p95_tat_hrs"]),   // off until its chip is clicked
+  matrixMetric:"sla_pct", matrixLane:"vin",
+  drillRegion:null, recordsLane:"vin", recordsQuery:"", hidden:new Set(),
+  sortCol:null, sortDir:-1,
+  data:{}, loading:false, error:null, synced:null, user:null, access:null, denied:false, loginLog:null,
+  cost:null, costError:null, costLatest:null, extras:{}, programs:null, qualities:{},
+  pipes:{}, pipePeriod:"L4W"
+};
+function isAdmin(){ return !!(state.user && state.user.admin); }
+/* Sheets are cached per product (and per Validation Failed mode on 360), so 360's
+   rooftop rows never overwrite images', and the two 360 modes never mix. */
+function curProduct(){ return PRODUCTS.find(p=>p.id===state.product)||{}; }
+function vfOn(){ return !!(curProduct().vfToggle && state.includeVF); }
+function key(laneId){ return state.product+(vfOn()?":vf":"")+":"+laneId; }
+function laneSheet(l){ return vfOn() ? l.sheet+"_vf" : l.sheet; }
+function raw(laneId){ return state.data[key(laneId)] || []; }
+function regSet(){
+  if(!state.regions[state.product]) state.regions[state.product]=new Set();
+  return state.regions[state.product];
+}
+
+/* ---------- sign-in ---------- */
+/* Fire-and-forget: a Google Form accepts a cross-origin POST but answers
+   opaquely, so we can't confirm it landed. Never block sign-in on it. */
+function logSignIn(user){
+  if(!LOGIN_LOG || !LOGIN_LOG.formUrl || !LOGIN_LOG.fields) return;
+  try{
+    const body=new URLSearchParams();
+    if(LOGIN_LOG.fields.email) body.append(LOGIN_LOG.fields.email, user.email);
+    if(LOGIN_LOG.fields.role)  body.append(LOGIN_LOG.fields.role, user.admin?"admin":"viewer");
+    /* credentials:"include" sends the browser's Google session with the POST,
+       so the form can stay restricted to Spyne accounts instead of being open
+       to anyone with the link. Harmless if the form is public. */
+    fetch(LOGIN_LOG.formUrl,{method:"POST",mode:"no-cors",credentials:"include",body:body})
+      .catch(function(){});
+  }catch(e){ /* logging must never break sign-in */ }
+}
+/* Anything config.json sets wins over the defaults above. A missing or broken
+   file is not fatal - we just keep the defaults. */
+async function loadConfig(){
+  try{
+    const r=await fetch(CONFIG_FILE+"?_="+Date.now(),{cache:"no-store"});
+    if(!r.ok) return;
+    const c=await r.json();
+    if(c && typeof c.clientId==="string" && c.clientId.trim()) GOOGLE_CLIENT_ID=c.clientId.trim();
+    if(c && Array.isArray(c.allowedDomains) && c.allowedDomains.length)
+      ALLOWED_DOMAINS=c.allowedDomains.map(d=>String(d).trim().toLowerCase()).filter(Boolean);
+    if(c && Array.isArray(c.admins) && c.admins.length)
+      ADMINS=c.admins.map(e=>String(e).trim().toLowerCase()).filter(Boolean);
+    if(c && typeof c.contact==="string" && c.contact.trim()) ACCESS_CONTACT=c.contact.trim();
+    if(c && c.loginLog && c.loginLog.formUrl && c.loginLog.fields) LOGIN_LOG=c.loginLog;
+    if(c && c.cost && c.cost.project && c.cost.dataset) COST=c.cost;
+  }catch(e){ /* keep defaults */ }
+}
+function decodeJwt(tok){
+  const p=tok.split(".")[1];
+  const j=atob(p.replace(/-/g,"+").replace(/_/g,"/"));
+  return JSON.parse(decodeURIComponent(Array.prototype.map.call(j,
+    c=>"%"+("00"+c.charCodeAt(0).toString(16)).slice(-2)).join("")));
+}
+function gateError(msg){
+  const el=document.getElementById("gateErr");
+  el.textContent=msg; el.hidden=!msg;
+}
+function acceptCredential(resp){
+  let p;
+  try{ p=decodeJwt(resp.credential); }
+  catch(e){ return gateError("That sign-in couldn\u2019t be read. Try again."); }
+  if(p.aud!==GOOGLE_CLIENT_ID)        return gateError("This sign-in was issued for a different app.");
+  if(!p.exp || p.exp*1000<Date.now()) return gateError("That sign-in has expired. Try again.");
+  const email=String(p.email||"").toLowerCase();
+  const domain=email.split("@")[1]||"";
+  if(ALLOWED_DOMAINS.indexOf(domain)<0)
+    return gateError(email+" isn\u2019t a Spyne account. Sign in with your work address.");
+  state.user={ email:email, name:p.name||email, admin:ADMINS.indexOf(email)>=0, exp:p.exp };
+  try{ sessionStorage.setItem("dm_cred",resp.credential); }catch(e){}
+  gateError("");
+  showApp(true);
+}
+function restoreSession(){
+  let tok=null;
+  try{ tok=sessionStorage.getItem("dm_cred"); }catch(e){}
+  if(!tok) return false;
+  try{
+    const p=decodeJwt(tok);
+    if(p.aud!==GOOGLE_CLIENT_ID || !p.exp || p.exp*1000<Date.now()) return false;
+    const email=String(p.email||"").toLowerCase();
+    if(ALLOWED_DOMAINS.indexOf(email.split("@")[1]||"")<0) return false;
+    state.user={ email:email, name:p.name||email, admin:ADMINS.indexOf(email)>=0, exp:p.exp };
+    return true;
+  }catch(e){ return false; }
+}
+function signOut(){
+  try{ sessionStorage.removeItem("dm_cred"); }catch(e){}
+  try{ if(window.google&&google.accounts&&google.accounts.id) google.accounts.id.disableAutoSelect(); }catch(e){}
+  state.user=null; state.data={}; state.synced=null; state.access=null; state.denied=false;
+  showGate();
+}
+function showGate(){
+  document.getElementById("gate").hidden=false;
+  document.getElementById("main").innerHTML="";
+  renderTabs(); renderSync();
+  if(!GOOGLE_CLIENT_ID){
+    document.getElementById("gateMsg").textContent=
+      "Sign-in isn\u2019t configured yet \u2014 add your Google OAuth Client ID to "+CONFIG_FILE+" in the repo.";
+    return;
+  }
+  waitForGsi();
+}
+function waitForGsi(tries){
+  tries=tries||0;
+  if(window.google && google.accounts && google.accounts.id){
+    google.accounts.id.initialize({ client_id:GOOGLE_CLIENT_ID, callback:acceptCredential, auto_select:true });
+    const slot=document.getElementById("gsiBtn");
+    slot.innerHTML="";
+    google.accounts.id.renderButton(slot,{theme:"outline",size:"large",text:"signin_with",shape:"pill",width:260});
+    google.accounts.id.prompt();
+    return;
+  }
+  if(tries>40) return gateError("Couldn\u2019t reach Google sign-in. Check the connection and reload.");
+  setTimeout(()=>waitForGsi(tries+1),150);
+}
+/* Reads access.json from the repo. Returns null when there isn't one, which
+   means "fall back to domain-only" rather than "nobody gets in". */
+async function loadAccess(){
+  try{
+    const res=await fetch(ACCESS_FILE+"?_="+Date.now(),{cache:"no-store"});
+    if(!res.ok) return null;
+    const j=await res.json();
+    const list=Array.isArray(j) ? j : (j&&Array.isArray(j.users) ? j.users : null);
+    if(!list) return null;
+    const out=[];
+    list.forEach(u=>{
+      const email=String((u&&(u.email||u))||"").trim().toLowerCase();
+      if(!email || email.indexOf("@")<0) return;
+      const role=String((u&&u.role)||"viewer").trim().toLowerCase();
+      out.push({ email:email, role:role });
+    });
+    return out.length ? out : null;
+  }catch(e){ return null; }
+}
+function showDenied(){
+  state.denied=true;
+  renderTabs(); renderSync();
+  const mail="mailto:"+ACCESS_CONTACT+
+    "?subject="+encodeURIComponent("Delivery Metrics \u2014 access request")+
+    "&body="+encodeURIComponent("Hi Praveen,\n\nPlease give me access to the Delivery Metrics dashboard.\n\nAccount: "+
+      state.user.email+"\nWhat I need it for: \n\nThanks");
+  document.getElementById("main").innerHTML=
+    '<div class="state" style="margin-top:48px"><h3>You\u2019re not on the access list yet</h3>'+
+    '<p>'+esc(state.user.email)+' signed in fine, but hasn\u2019t been given access to this dashboard. '+
+    'Send a request and it\u2019ll land in '+esc(ACCESS_CONTACT)+'\u2019s inbox.</p>'+
+    '<p style="margin-top:18px"><a class="btn" style="background:var(--teal);border-color:var(--teal);color:#fff;'+
+      'text-decoration:none;display:inline-block" href="'+mail+'">Request access</a>'+
+    '<button class="linky" id="denySignOut" style="margin-left:18px">Sign in as someone else</button></p></div>';
+  const so=document.getElementById("denySignOut");
+  if(so) so.onclick=signOut;
+}
+async function showApp(fresh){
+  document.getElementById("gate").hidden=true;
+  state.denied=false;
+  state.access=await loadAccess();
+  const forcedAdmin=ADMINS.indexOf(state.user.email)>=0;
+  if(state.access){
+    const hit=state.access.find(a=>a.email===state.user.email);
+    if(!hit && !forcedAdmin) return showDenied();
+    state.user.admin = forcedAdmin || (hit && hit.role==="admin");
+  }
+  if(fresh) logSignIn(state.user);   // only on a real sign-in, not a session restore
+  render();
+  loadAll();
+}
+
+/* ---------- data ---------- */
+function gvizBase(sheet){
+  return "https://docs.google.com/spreadsheets/d/"+SHEET_ID+
+         "/gviz/tq?headers=1&sheet="+encodeURIComponent(sheet)+"&_="+Date.now();
+}
+/* Opened straight off disk, the page has a null origin and Google refuses the
+   cross-origin fetch. A <script> tag has no such limit, so fall back to JSONP. */
+let jsonpN=0;
+function loadViaJsonp(sheet){
+  return new Promise(function(resolve,reject){
+    const cb="__gviz_cb_"+(++jsonpN);
+    const s=document.createElement("script");
+    let settled=false;
+    function cleanup(){ try{ delete window[cb]; }catch(e){ window[cb]=undefined; } if(s.parentNode) s.parentNode.removeChild(s); }
+    window[cb]=function(resp){
+      settled=true; cleanup();
+      if(!resp||resp.status==="error"){
+        reject(new Error((resp&&resp.errors&&resp.errors[0]&&resp.errors[0].detailed_message)||("Sheet \u201c"+sheet+"\u201d could not be read")));
+      } else resolve(resp.table);
+    };
+    s.onerror=function(){ if(!settled){ cleanup(); reject(new Error("Couldn\u2019t reach Google Sheets \u2014 check the connection")); } };
+    s.src=gvizBase(sheet)+"&tqx=out:json;responseHandler:"+cb;
+    document.head.appendChild(s);
+    setTimeout(function(){ if(!settled){ cleanup(); reject(new Error("Sheet \u201c"+sheet+"\u201d timed out")); } },25000);
+  });
+}
+async function fetchTable(sheet){
+  try{
+    const res=await fetch(gvizBase(sheet)+"&tqx=out:json");
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    return parseGviz(await res.text());
+  }catch(e){
+    return loadViaJsonp(sheet);
+  }
+}
+function parseGviz(text){
+  const s=text.indexOf("{"), e=text.lastIndexOf("}");
+  if(s<0) throw new Error("Unexpected response from Google Sheets");
+  const j=JSON.parse(text.slice(s,e+1));
+  if(j.status==="error") throw new Error((j.errors&&j.errors[0]&&j.errors[0].detailed_message)||"Sheet query failed");
+  return j.table;
+}
+function normGran(v){
+  const g=String(v==null?"":v).trim().toLowerCase();
+  if(/^da(y|ily)/.test(g)) return "day";   /* "day" and "daily" */
+  if(g.indexOf("week")===0) return "week";
+  if(g.indexOf("month")===0) return "month";
+  return g;
+}
+/* Order periods off their labels (M-4 \u2192 MTD) so sheets without a date column
+   still read oldest-to-newest instead of however the rows happen to sit. */
+function periodRank(p){
+  const t=String(p==null?"":p).trim();
+  const m=/^([MWDQY])-(\d+)$/i.exec(t);
+  if(m) return -parseInt(m[2],10);
+  if(/^(MTD|WTD|DTD|QTD|YTD)$/i.test(t)) return 0;
+  return null;
+}
+function comparePeriods(a,b){
+  const ra=periodRank(a.period), rb=periodRank(b.period);
+  if(ra!==null && rb!==null && ra!==rb) return ra-rb;
+  if(a.date && b.date) return a.date-b.date;
+  return 0;
+}
+function toDate(v){
+  if(v==null) return null;
+  if(v instanceof Date) return v;
+  const m=/^Date\((\d+),(\d+),(\d+)/.exec(String(v));
+  return m ? new Date(+m[1],+m[2],+m[3]) : new Date(v);
+}
+async function loadSheet(sheet){
+  const table=await fetchTable(sheet);
+  const labels=table.cols.map((c,i)=>(c.label||c.id||("col"+i)).trim());
+  return table.rows.map(r=>{
+    const o={ v:{} };
+    labels.forEach((lab,i)=>{
+      const cell=r.c&&r.c[i], val=cell?cell.v:null;
+      if(lab==="sort_date") o.date=toDate(val);
+      /* Sheets don't all use the same headers: images/360 say granularity + sort_group,
+         video says period_type + sort_order, and two video sheets carry no date at all. */
+      else if(lab==="granularity"||lab==="period_type") o.granularity=normGran(val);
+      else if(lab==="period") o.period=val==null?"":String(val);
+      else if(lab==="region") o.region=val==null?"Unknown":String(val);
+      else if(lab==="region_set") o.regionSet=val==null?"":String(val);
+      else if(lab==="sort_group"||lab==="sort_order") o.group=val;
+      else o.v[lab]= (val===""||val==null) ? null : Number(val);
+    });
+    return o;
+  }).filter(r=>r.period);
+}
+async function loadAll(){
+  const prod=PRODUCTS.find(p=>p.id===state.product);
+  if(!prod||prod.status!=="live"||!prod.lanes.length) return;
+  state.loading=true; state.error=null; render();
+  try{
+    const results=await Promise.all(prod.lanes.map(l=>loadSheet(laneSheet(l))));
+    prod.lanes.forEach((l,i)=>{ state.data[key(l.id)]=results[i]; });
+    if(!state.regionsInit[state.product]){
+      allRegions().forEach(r=>regSet().add(r));
+      state.regionsInit[state.product]=true;
+    }
+    await ensureByRegion();
+    state.extras[prod.id]=await loadExtra(prod);
+    if(prod.pipeline) state.pipes[prod.id]=await loadPipe(prod.pipeline.sheet).catch(()=>null);
+    state.programs=await loadPrograms();
+    state.qualities[prod.id]=await loadQuality(prod);
+    state.costError=null;
+    state.cost=await loadCost();
+    state.costLatest=null;
+    if(state.cost) state.cost.forEach(function(r){
+      if(r.latest && (!state.costLatest || r.latest>state.costLatest)) state.costLatest=r.latest;
+    });
+    state.synced=new Date();
+    if(isAdmin() && LOGIN_LOG && LOGIN_LOG.sheetName){
+      try{ state.loginLog=await loadLoginLog(); }catch(e){ state.loginLog=null; }
+    }
+  }catch(err){ state.error=err.message||String(err); }
+  state.loading=false; render();
+}
+
+/* Reads the form's response tab back. Columns are matched by header text so it
+   survives Google's default "Timestamp" naming or anything you rename them to. */
+async function loadLoginLog(){
+  const t=await fetchTable(LOGIN_LOG.sheetName);
+  const labels=t.cols.map(c=>String(c.label||"").trim().toLowerCase());
+  const find=frag=>labels.findIndex(l=>l.indexOf(frag)>=0);
+  const ti=find("time")>=0?find("time"):0, ei=find("mail"), ri=find("role");
+  const cell=(r,i)=> (i>=0 && r.c && r.c[i] && r.c[i].v!=null) ? r.c[i].v : null;
+  const out=[];
+  t.rows.forEach(r=>{
+    const em=cell(r,ei);
+    if(!em) return;
+    out.push({ at:toDate(cell(r,ti)), email:String(em).trim().toLowerCase(),
+               role:ri>=0 ? String(cell(r,ri)||"").trim() : "" });
+  });
+  out.sort((a,b)=> (a.at&&b.at) ? b.at-a.at : 0);
+  return out;
+}
+
+/* ---------- cost, straight from BigQuery ----------
+   Same cost model as the QC Cost dashboard: a person's monthly salary (prorated
+   for a partial month, carried forward when payroll is late) spread over that
+   month's Sum_Target, giving a rate per unit of target. Work rows are priced at
+   that rate, so a 360 spin costs more than a still. Region and segment come
+   from arr, joined on Team_ID.
+   Queries run as the signed-in user, so this needs BigQuery access on the
+   project. Without it, cost simply doesn't appear rather than erroring.        */
+let COST = null;               // config.json -> "cost": {...}
+const BQ = { token:null, client:null, pending:null, tried:false };
+
+function bqReady(){
+  return new Promise(function(resolve,reject){
+    const t0=Date.now();
+    (function poll(){
+      if(window.google && google.accounts && google.accounts.oauth2) return resolve();
+      if(Date.now()-t0>12000) return reject(new Error("Google sign-in didn't load."));
+      setTimeout(poll,120);
+    })();
+  });
+}
+function bqInitClient(){
+  if(BQ.client) return;
+  BQ.client=google.accounts.oauth2.initTokenClient({
+    client_id:GOOGLE_CLIENT_ID,
+    scope:"https://www.googleapis.com/auth/bigquery.readonly",
+    callback:function(r){
+      const p=BQ.pending; BQ.pending=null;
+      if(!p) return;
+      r && r.access_token ? p.resolve(r.access_token) : p.reject(new Error("No token"));
+    },
+    error_callback:function(){ const p=BQ.pending; BQ.pending=null; if(p) p.reject(new Error("cancelled")); }
+  });
+}
+/* prompt:"" asks for a token without showing anything. It works when the person
+   has already consented; the first time round it needs the visible prompt. */
+function bqToken(interactive){
+  return bqReady().then(function(){
+    bqInitClient();
+    return new Promise(function(resolve,reject){
+      BQ.pending={resolve:resolve,reject:reject};
+      try{ BQ.client.requestAccessToken({prompt:interactive?"consent":"", hint:state.user?state.user.email:undefined}); }
+      catch(e){ BQ.pending=null; reject(e); }
+    });
+  });
+}
+async function bq(sql){
+  const base="https://bigquery.googleapis.com/bigquery/v2/projects/"+COST.project;
+  const auth={ Authorization:"Bearer "+BQ.token, "Content-Type":"application/json" };
+  const res=await fetch(base+"/queries",{method:"POST",headers:auth,
+    body:JSON.stringify({query:sql,useLegacySql:false,timeoutMs:180000,maxResults:20000})});
+  const data=await res.json();
+  if(res.status===401){ const e=new Error("expired"); e.expired=true; throw e; }
+  if(!res.ok) throw new Error((data.error&&data.error.message)||("BigQuery returned "+res.status));
+  if(!data.jobComplete) throw new Error("Query still running \u2014 press Refresh in a moment.");
+  const cols=((data.schema&&data.schema.fields)||[]).map(f=>f.name);
+  const shape=page=>((page.rows)||[]).map(r=>{ const o={}; cols.forEach((c,i)=>o[c]=r.f[i].v); return o; });
+  let rows=shape(data), token=data.pageToken;
+  const job=data.jobReference||{};
+  while(token && rows.length<500000){
+    const qs=new URLSearchParams({pageToken:token,maxResults:"20000"});
+    if(job.location) qs.set("location",job.location);
+    const r2=await fetch(base+"/queries/"+job.jobId+"?"+qs,{headers:auth});
+    const d2=await r2.json();
+    if(!r2.ok) throw new Error((d2.error&&d2.error.message)||"Couldn't page the results.");
+    rows=rows.concat(shape(d2)); token=d2.pageToken;
+  }
+  return rows;
+}
+
+function costSql(){
+  const P=COST.project, D=COST.dataset;
+  const domains=(COST.deliveryDomains||["spyne.co.in"])
+    .map(d=>"LOWER(TRIM(QC)) LIKE '%@"+d+"'").join(" OR ");
+  const assumed=COST.assumedMonthlySalary==null?25000:COST.assumedMonthlySalary;
+  const months=COST.months||8;
+  /* weekOffset shifts which real week gets called W-1. 0 means W-1 is the last
+     complete week; set it to 1 if your sheets call the week in progress W-1. */
+  const wOff=COST.weekOffset==null?0:COST.weekOffset;
+  return `
+WITH work AS (
+  SELECT LOWER(TRIM(QC)) AS qc_email,
+         DATE(Hourly_Date) AS work_date,
+         FORMAT_DATE('%Y-%m', DATE(Hourly_Date)) AS month_key,
+         LOWER(TRIM(Team_id)) AS team_id,
+         TRIM(Product) AS product,
+         IFNULL(Images,0) AS images,
+         IFNULL(Sum_Target,0) AS sum_target
+  FROM \`${P}.${D}.delivery_working_data\`
+  WHERE QC IS NOT NULL AND TRIM(QC) != ''
+    AND DATE(Hourly_Date) >= DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL ${months} MONTH), MONTH)
+    AND (${domains})
+),
+salary_raw AS (
+  SELECT FORMAT_DATE('%Y-%m', SAFE.PARSE_DATE("%b'%y", Month)) AS month_key,
+         LOWER(TRIM(\`Work Email\`)) AS email, Salary AS salary
+  FROM \`${P}.${D}.salary_sheet\`
+  WHERE \`Work Email\` IS NOT NULL AND Salary IS NOT NULL
+    AND SAFE.PARSE_DATE("%b'%y", Month) IS NOT NULL
+),
+sal_email AS (
+  SELECT month_key, email, SUM(salary) AS salary FROM salary_raw GROUP BY month_key, email
+),
+month_has_salary AS ( SELECT DISTINCT month_key FROM sal_email ),
+pm_volume AS (
+  SELECT qc_email, month_key, SUM(images) AS month_images, SUM(sum_target) AS month_target
+  FROM work GROUP BY qc_email, month_key
+),
+month_span AS (
+  SELECT month_key,
+         DATE_DIFF(MAX(work_date), DATE_TRUNC(MAX(work_date), MONTH), DAY) + 1 AS days_covered,
+         EXTRACT(DAY FROM LAST_DAY(MAX(work_date))) AS days_in_month
+  FROM work GROUP BY month_key
+),
+pm_joined AS (
+  SELECT v.qc_email, v.month_key, v.month_images, v.month_target, s.salary AS actual_salary
+  FROM pm_volume v LEFT JOIN sal_email s
+    ON s.month_key = v.month_key AND s.email = v.qc_email
+),
+pm_filled AS (
+  SELECT *, LAST_VALUE(actual_salary IGNORE NULLS) OVER w AS carried_salary
+  FROM pm_joined
+  WINDOW w AS (PARTITION BY qc_email ORDER BY month_key ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+),
+pm AS (
+  SELECT f.qc_email, f.month_key,
+    SAFE_DIVIDE(
+      COALESCE(f.actual_salary, IF(mh.month_key IS NULL, COALESCE(f.carried_salary, ${assumed}), NULL))
+        * LEAST(1.0, SAFE_DIVIDE(ms.days_covered, ms.days_in_month)),
+      NULLIF(f.month_target, 0)) AS rate
+  FROM pm_filled f
+  JOIN month_span ms USING (month_key)
+  LEFT JOIN month_has_salary mh USING (month_key)
+),
+dims AS (
+  SELECT LOWER(TRIM(Team_ID)) AS team_id,
+         ANY_VALUE(Region) AS region,
+         ANY_VALUE(Enterprise_Details___Enterprise___Customer_Segment) AS segment
+  FROM \`${P}.${D}.arr\`
+  WHERE Team_ID IS NOT NULL AND TRIM(Team_ID) != ''
+  GROUP BY team_id
+),
+priced AS (
+  SELECT w.work_date, w.product, w.images,
+         w.sum_target * IFNULL(pm.rate, 0) AS cost,
+         IF(pm.rate IS NULL, w.images, 0)  AS unpriced_images,
+         IFNULL(d.region,  'Unknown') AS region,
+         IFNULL(d.segment, 'Unknown') AS segment
+  FROM work w
+  JOIN pm ON pm.qc_email = w.qc_email AND pm.month_key = w.month_key
+  LEFT JOIN dims d ON d.team_id = w.team_id
+),
+bucketed AS (
+  SELECT 'month' AS period_type,
+         DATE_DIFF(DATE_TRUNC(CURRENT_DATE(),MONTH), DATE_TRUNC(work_date,MONTH), MONTH) AS idx,
+         work_date, product, region, segment, images, cost, unpriced_images
+  FROM priced
+  UNION ALL
+  SELECT 'week',
+         DATE_DIFF(DATE_TRUNC(CURRENT_DATE(),WEEK(MONDAY)), DATE_TRUNC(work_date,WEEK(MONDAY)), WEEK) + ${wOff},
+         work_date, product, region, segment, images, cost, unpriced_images
+  FROM priced
+  UNION ALL
+  SELECT 'day',
+         DATE_DIFF(CURRENT_DATE(), work_date, DAY),
+         work_date, product, region, segment, images, cost, unpriced_images
+  FROM priced
+)
+SELECT period_type,
+       CASE WHEN period_type='month' AND idx=0 THEN 'MTD'
+            WHEN period_type='month' THEN FORMAT('M-%d', idx)
+            WHEN period_type='day' THEN FORMAT('D-%d', idx)
+            ELSE FORMAT('W-%d', idx) END AS period,
+       product, region, segment,
+       ROUND(SUM(cost),2) AS cost,
+       SUM(images) AS images,
+       SUM(unpriced_images) AS unpriced_images,
+       MAX(work_date) AS latest
+FROM bucketed
+WHERE (period_type='month' AND idx BETWEEN 0 AND 5)
+   OR (period_type='week'  AND idx BETWEEN 1 AND 4)
+   OR (period_type='day'   AND idx BETWEEN 1 AND 7)
+GROUP BY period_type, period, product, region, segment`;
+}
+
+/* map sheet-side names onto what BigQuery returns */
+function normKey(x){ return String(x==null?"":x).toLowerCase().replace(/[^a-z0-9]/g,""); }
+function costProductMatch(product){
+  const map=(COST&&COST.productMap)||{ images:["images","image"], spin:["360","spin","360 spin"], video:["video"] };
+  const want=map[state.product]||[];
+  const p=normKey(product);
+  return want.some(w=>normKey(w)===p);
+}
+function costSegmentOf(segment){
+  const map=(COST&&COST.segmentMap)||{ ent:["enterprise"], mid:["mid-market","mid market","midmarket","mid"],
+                                       resellers:["reseller","resellers"], smb:["smb"] };
+  const s=normKey(segment);
+  if(!s) return null;
+  for(const k in map) if(map[k].some(v=>normKey(v)===s)) return k;
+  /* Fall back to containment so "Enterprise - Tier 1" or "SMB (new)" still land. */
+  for(const k in map) if(map[k].some(function(v){ const nv=normKey(v);
+    return nv && (s.indexOf(nv)===0 || nv.indexOf(s)===0 || s.indexOf(nv)>=0); })) return k;
+  return null;
+}
+async function loadCost(){
+  if(!COST || COST.enabled===false || !GOOGLE_CLIENT_ID) return null;
+  if(!BQ.token){
+    try{ BQ.token=await bqToken(false); }
+    catch(e){ return null; }          // no consent yet - offer the button instead
+  }
+  try{ return await bq(costSql()); }
+  catch(e){
+    if(e.expired){
+      try{ BQ.token=await bqToken(false); return await bq(costSql()); }catch(e2){ return null; }
+    }
+    state.costError=e.message||String(e);
+    try{ console.error("cost query failed:", state.costError); }catch(_){}
+    return null;
+  }
+}
+
+/* aggregate the BQ rows down to the periods on screen */
+function costSeries(laneId, metric, prefix, regionsOverride){
+  const rows=state.cost;
+  if(!rows) return periodsOf().map(()=>null);
+  const px = prefix!=null ? prefix : segPrefix();
+  const segWanted = px==="" ? null : px.replace(/_$/,"");
+  const keep = laneId==="region" ? (regionsOverride||activeRegions()) : null;
+  const acc={};
+  rows.forEach(r=>{
+    if(r.period_type!==state.granularity) return;
+    if(!costProductMatch(r.product)) return;
+    if(segWanted && costSegmentOf(r.segment)!==segWanted) return;
+    if(keep && keep.indexOf(r.region)<0) return;
+    const a=acc[r.period]||(acc[r.period]={cost:0,images:0});
+    a.cost   += Number(r.cost)||0;
+    a.images += Number(r.images)||0;
+  });
+  return periodsOf().map(p=>{
+    const a=acc[p];
+    if(!a) return null;
+    if(metric.id==="cost")   return a.cost;
+    if(metric.id==="images") return a.images;
+    return a.images ? a.cost/a.images : null;     // cost per image
+  });
+}
+
+/* Fixed panels that ignore every filter. Rows come either from the config or
+   from a workbook tab shaped reason | count | %. */
+function panelsOf(prod){
+  const list=(prod&&prod.panels)?prod.panels.slice():[];
+  if(prod&&prod.incidents) list.push(Object.assign({kind:"log"}, prod.incidents));
+  return list;
+}
+async function loadExtra(prod){
+  const all=panelsOf(prod);
+  if(!all.length) return null;
+  const out={};
+  const seen={};
+  const unique=all.filter(function(p){
+    if(!p.sheet || seen[p.sheet]) return false;
+    seen[p.sheet]=true; return true;
+  });
+  await Promise.all(unique.map(async function(p){
+    try{
+      const t=await fetchTable(p.sheet);
+      const labels=t.cols.map(c=>String(c.label||"").trim());
+      if(p.kind==="table"){
+        out[p.sheet]={ cols:labels, types:t.cols.map(c=>c.type),
+          rows:t.rows.map(r=>labels.map((l,i)=>(r.c&&r.c[i]&&r.c[i].v!=null)?r.c[i].v:null))
+                     .filter(r=>r.some(v=>v!=null&&v!=="")) };
+        return;
+      }
+      if(p.kind==="log"){
+        const di=t.cols.findIndex(c=>c.type==="date"||c.type==="datetime");
+        const strs=t.cols.map((c,i)=>i).filter(i=>i!==di && labels[i]!=="");
+        out[p.sheet]=t.rows.map(function(r){
+          const g=i=> (i>=0&&r.c&&r.c[i]&&r.c[i].v!=null) ? r.c[i].v : null;
+          return { at:toDate(g(di)), by:String(g(strs[0])||""), text:String(g(strs[1])||g(strs[0])||"") };
+        }).filter(x=>x.text).sort((a,b)=>(a.at&&b.at)?b.at-a.at:0);
+        return;
+      }
+      const low=labels.map(l=>l.toLowerCase());
+      const num=i=>t.rows.some(r=>r.c&&r.c[i]&&typeof r.c[i].v==="number");
+      const byName=re=>low.findIndex(l=>re.test(l));
+      const pti=byName(/^period_type$|^granularity$/);
+      const pei=byName(/^period$/);
+      const cti=byName(/^category$|^type$|^group$/);
+      let li=byName(/reason|issue|label|bucket/);
+      if(li<0) li=labels.findIndex((l,i)=>!num(i) && i!==pti && i!==pei && i!==cti);
+      const pi=labels.findIndex((l,i)=>num(i)&&/^%$|pct|percent|share|rate/i.test(l));
+      const ci=labels.findIndex((l,i)=>num(i)&&i!==pi);
+      out[p.sheet]=t.rows.map(function(r){
+        const g=i=> (i>=0&&r.c&&r.c[i]&&r.c[i].v!=null) ? r.c[i].v : null;
+        let pct=g(pi);
+        /* pctWhole means the sheet already stores 1.58 for 1.58%. Guessing from
+           magnitude breaks below 1, where 0.28 would read as 28%. */
+        if(pct!=null) pct = p.pctWhole ? pct/100 : (pct>1 ? pct/100 : pct);
+        let lab=g(li)==null?"":String(g(li)).trim();
+        if(!lab || lab.toLowerCase()==="null") lab="Unspecified";
+        return { pt:normGran(g(pti)), p:g(pei)==null?null:String(g(pei)).trim(),
+                 cat:g(cti)==null?null:String(g(cti)).trim(),
+                 label:lab, count:Number(g(ci))||0, pct:pct };
+      }).filter(x=>x.label);
+    }catch(e){ out[p.sheet]=null; }
+  }));
+  return out;
+}
+function extraHTML(){
+  const prod=PRODUCTS.find(p=>p.id===state.product);
+  if(!prod || !prod.panels || !prod.panels.length) return "";
+  const pct=v=>(v==null?"\u2014":(v*100).toFixed(2)+"%");
+  const periodsNow=periodsOf();
+  const latestPeriod=periodsNow.length?periodsNow[periodsNow.length-1]:null;
+  let filtered=false;
+  const cards=prod.panels.map(function(p){
+    let rows = p.rows || (state.extras[state.product] && state.extras[state.product][p.sheet]) || null;
+    if(!rows) return "";
+
+    if(p.kind==="table"){
+      const cols=rows.cols||[], data=rows.rows||[];
+      if(!data.length) return "";
+      const cell=function(v){
+        if(v==null||v==="") return "\u2014";
+        if(typeof v==="string" && /^Date\(/.test(v)){
+          const d=toDate(v);
+          return d?esc(d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})):esc(v);
+        }
+        return typeof v==="number" ? v.toLocaleString("en-IN") : esc(v);
+      };
+      return '<section class="rcard ev-card"><div class="rcard-hd"><h3>'+esc(p.title)+'</h3>'+
+        '<span class="rcard-rate" style="font-size:13px;color:var(--muted)">'+data.length+' logged</span></div>'+
+        '<div class="scroll" style="max-height:none;border:0"><table class="records"><tr>'+
+        cols.map(c=>'<th style="text-align:left">'+esc(c)+'</th>').join("")+'</tr><tbody>'+
+        data.map(r=>'<tr>'+r.map(v=>'<td style="text-align:left">'+cell(v)+'</td>').join("")+'</tr>').join("")+
+        '</tbody></table></div></section>';
+    }
+
+    if(p.kind==="reasons" && Array.isArray(rows) && p.cat){
+      const want=normKey(p.cat);
+      rows=rows.filter(r=>normKey(r.cat)===want);
+    }
+    /* Reasons follow the period filter when the sheet carries those columns. */
+    if(p.kind==="reasons" && Array.isArray(rows) && rows.some(r=>r.p)){
+      rows=rows.filter(r=>(!r.pt||r.pt===state.granularity) && r.p===latestPeriod);
+      filtered=true;
+      if(!rows.length) return '<section class="rcard"><div class="rcard-hd"><h3>'+esc(p.title)+'</h3></div>'+
+        '<p style="margin:10px 0 14px;font-size:13px;color:var(--muted)">Nothing recorded for '+
+        esc(latestPeriod||"this period")+'.</p></section>';
+    }
+    if(!rows.length) return "";
+    if(p.kind==="log"){
+      const items=rows.map(function(r){
+        return '<li class="ev"><div class="ev-when num">'+
+          (r.at ? esc(r.at.toLocaleDateString("en-IN",{day:"2-digit",month:"short"})) : "\u2014")+'</div>'+
+          '<div class="ev-body"><span class="ev-tag">'+esc(r.by||"\u2014")+'</span>'+
+          '<p>'+esc(r.text)+'</p></div></li>';
+      }).join("");
+      return '<section class="rcard ev-card"><div class="rcard-hd"><h3>'+esc(p.title)+'</h3>'+
+        '<span class="rcard-rate" style="font-size:13px;color:var(--muted)">'+rows.length+
+        ' logged</span></div><ul class="evs">'+items+'</ul></section>';
+    }
+    const tone = p.tone==="amber" ? "var(--warn)" : "var(--down)";
+    const rate = p.rate!=null ? p.rate : rows.reduce((a,r)=>a+(r.pct||0),0);
+    const total= p.total!=null ? p.total : rows.reduce((a,r)=>a+(r.count||0),0);
+    const max  = Math.max.apply(null, rows.map(r=>r.count||0)) || 1;
+    const body = rows.map(function(r){
+      return '<li class="rsn"><div class="rsn-top"><span class="rsn-lab">'+esc(r.label)+'</span>'+
+        '<span class="rsn-num num">'+(r.count||0).toLocaleString("en-IN")+
+        ' <span class="rsn-dot">\u00b7</span> <b style="color:'+tone+'">'+pct(r.pct)+'</b></span></div>'+
+        '<div class="rsn-track"><i style="width:'+Math.max(2,((r.count||0)/max)*100).toFixed(1)+
+        '%;background:'+tone+'"></i></div></li>';
+    }).join("");
+    return '<section class="rcard"><div class="rcard-hd">'+
+      '<h3>'+esc(p.title)+'</h3><span class="rcard-rate" style="color:'+tone+'">'+pct(rate)+'</span></div>'+
+      '<div class="rcard-sub"><span>'+esc(p.subtitle||"")+' \u00b7 all reasons</span>'+
+      '<span>of reviewed \u00b7 '+total.toLocaleString("en-IN")+'</span></div>'+
+      '<ul class="rsns'+(p.noCap?" rsns--all":"")+'">'+body+'</ul></section>';
+  }).join("");
+  const shown=cards.split("<section").length-1;
+  if(!cards.replace(/\s/g,"")) return "";
+  return '<div class="sec"><h2>Fulfilment Gap Reasons</h2>'+
+    '<span class="note">'+(filtered
+      ? esc(periodName(latestPeriod||""))+' \u00b7 follows the period filter'
+      : 'Fixed \u2014 not affected by the filters above')+'</span></div>'+
+    '<div class="rgrid" style="--cols:'+Math.max(1,shown)+'">'+cards+'</div>';
+}
+
+async function loadQuality(prod){
+  if(!prod || !prod.quality || !prod.quality.sheet) return null;
+  try{
+    const t=await fetchTable(prod.quality.sheet);
+    const low=t.cols.map(c=>String(c.label||"").trim().toLowerCase());
+    const at=re=>low.findIndex(l=>re.test(l));
+    const i={ pt:at(/^period_type$|^granularity$/), p:at(/^period$/),
+              tot:at(/total/), del:at(/deliver/),
+              rev:at(/review/), pass:at(/pass/), iss:at(/issue_count|^issues?$/),
+              ipct:at(/issue_pct|issue_%/) };
+    return t.rows.map(function(r){
+      const g=k=> (i[k]>=0 && r.c && r.c[i[k]] && r.c[i[k]].v!=null) ? r.c[i[k]].v : null;
+      const rev=Number(g("rev")), iss=Number(g("iss"));
+      let ip=g("ipct");
+      /* issue_pct is blank on some rows - derive it rather than drop the point. */
+      if(ip==null && rev>0 && !isNaN(iss)) ip=(iss/rev)*100;
+      const nz=k=>{ const v=g(k); return v==null?null:Number(v); };
+      return { pt:normGran(g("pt")), p:g("p")==null?null:String(g("p")).trim(),
+               total:nz("tot"), delivered:nz("del"),
+               reviewed:isNaN(rev)?null:rev, passed:nz("pass"),
+               issues:isNaN(iss)?null:iss, issuePct:ip==null?null:Number(ip) };
+    }).filter(x=>x.p);
+  }catch(e){ return null; }
+}
+/* Reviewed and passed as bars on the right, issue rate as a line on the left. */
+function qualityHTML(){
+  const prod=PRODUCTS.find(p=>p.id===state.product);
+  if(!prod || !prod.quality || !state.qualities[state.product]) return "";
+  const periods=periodsOf();
+  const byP=new Map();
+  state.qualities[state.product].forEach(function(r){ if(!r.pt||r.pt===state.granularity) byP.set(r.p,r); });
+  const rows=periods.map(p=>byP.get(p)||null);
+  if(!rows.some(r=>r&&r.reviewed!=null)) return "";
+
+  const W=1000,H=300,padL=58,padR=64,padT=30,padB=40;
+  const base=H-padB, n=periods.length, inner=W-padL-padR;
+  const pcts=rows.filter(r=>r&&r.issuePct!=null).map(r=>r.issuePct);
+  const cnts=rows.filter(r=>r).map(r=>Math.max(r.reviewed||0,r.passed||0));
+  const pmax=Math.max(1, Math.max.apply(null,pcts.length?pcts:[1])*1.3);
+  const cmax=Math.max(1, Math.max.apply(null,cnts.length?cnts:[1])*1.15);
+  const x=i=> padL+inner*(i+0.5)/n;
+  const yp=v=> base-(base-padT)*(v/pmax);
+  const yc=v=> base-(base-padT)*(v/cmax);
+  const slot=(inner/n)*0.5;
+  const fmtC=v=> v>=1000 ? (v/1000).toFixed(v>=10000?0:1)+"k" : String(Math.round(v));
+
+  let svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="300" role="img" aria-label="Quality">';
+  svg+='<line x1="'+padL+'" y1="'+base+'" x2="'+(W-padR)+'" y2="'+base+'" stroke="var(--hair-strong)"/>';
+  for(let k=0;k<=3;k++){
+    const t=k/3, yy=base-(base-padT)*t;
+    if(k) svg+='<line x1="'+padL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+yy.toFixed(1)+
+               '" stroke="var(--hair)" stroke-dasharray="3 4"/>';
+    svg+='<text x="'+(padL-9)+'" y="'+(yy+4).toFixed(1)+'" text-anchor="end" font-size="11" fill="var(--down)">'+
+         (pmax*t).toFixed(1)+'%</text>';
+    svg+='<text x="'+(W-padR+9)+'" y="'+(yy+4).toFixed(1)+'" text-anchor="start" font-size="11" fill="var(--orange)">'+
+         fmtC(cmax*t)+'</text>';
+  }
+  /* Same stack as the fulfilment card: passed in green from the baseline,
+     the rest of what was reviewed sitting on top in orange. */
+  rows.forEach(function(r,i){
+    if(!r || r.reviewed==null) return;
+    const bx=(x(i)-slot/2).toFixed(1);
+    const passed = r.passed==null ? null : r.passed;
+    if(passed!=null) svg+='<rect x="'+bx+'" y="'+yc(passed).toFixed(1)+'" width="'+slot.toFixed(1)+
+      '" height="'+Math.max(1,base-yc(passed)).toFixed(1)+'" fill="var(--up)" opacity=".9"/>';
+    const gap = passed==null ? r.reviewed : Math.max(0, r.reviewed-passed);
+    if(gap>0) svg+='<rect x="'+bx+'" y="'+yc(r.reviewed).toFixed(1)+'" width="'+slot.toFixed(1)+
+      '" height="'+Math.max(1, yc(passed==null?0:passed)-yc(r.reviewed)).toFixed(1)+
+      '" rx="3" fill="var(--orange)" opacity=".9"/>';
+  });
+  rows.forEach(function(r,i){
+    if(!r) return;
+    const L=(k,v)=>v==null?null:'<span style="color:#9DB4B1">'+k+'</span> <b>'+v+'</b>';
+    const num=v=>v==null?null:Number(v).toLocaleString("en-IN");
+    const body=[ '<b>'+esc(periods[i])+'</b>',
+      L("Total videos", num(r.total)), L("Delivered", num(r.delivered)),
+      L("Reviewed", num(r.reviewed)), L("Passed", num(r.passed)),
+      L("Issues", num(r.issues)),
+      L("Issue rate", r.issuePct==null?null:r.issuePct.toFixed(1)+"%") ].filter(Boolean).join("<br>");
+    svg+='<rect class="pt" x="'+(padL+inner*i/n).toFixed(1)+'" y="'+padT+'" width="'+(inner/n).toFixed(1)+
+         '" height="'+(base-padT).toFixed(1)+'" fill="transparent" pointer-events="all" data-tip="'+
+         body.replace(/"/g,"&quot;")+'"></rect>';
+  });
+  const pts=[]; rows.forEach((r,i)=>{ if(r&&r.issuePct!=null) pts.push([x(i),yp(r.issuePct),i,r.issuePct,r]); });
+  if(pts.length>1) svg+='<path d="'+pts.map((p,k)=>(k?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ")+
+    '" fill="none" stroke="var(--down)" stroke-width="2.4" stroke-linejoin="round"/>';
+  pts.forEach(function(p){
+    svg+='<circle class="pt" cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="4.5" fill="var(--panel)" '+
+         'stroke="var(--down)" stroke-width="2.4" data-label="Issue rate" data-x="'+esc(periods[p[2]])+
+         '" data-v="'+esc(p[3].toFixed(1)+"% \u00b7 "+(p[4].issues==null?"?":p[4].issues)+" issues")+'"></circle>';
+    svg+='<text x="'+p[0].toFixed(1)+'" y="'+Math.max(16,p[1]-11).toFixed(1)+'" text-anchor="middle" '+
+         'font-size="11.5" font-weight="600" fill="var(--down)">'+p[3].toFixed(1)+'%</text>';
+  });
+  periods.forEach((lab,i)=>{
+    svg+='<text x="'+x(i).toFixed(1)+'" y="'+(H-14)+'" text-anchor="middle" font-size="12" font-weight="500" fill="var(--ink-2)">'+esc(lab)+'</text>';
+  });
+  svg+='</svg>';
+  return '<div class="sec"><h2>'+esc(prod.quality.title||"Quality")+'</h2>'+
+    '<span class="note">From the '+esc(prod.quality.sheet)+' tab \u00b7 issue rate on the left, counts on the right \u00b7 hover for numbers</span></div>'+
+    '<div class="panel">'+svg+
+    '<div class="legend"><span><span class="swatch" style="background:var(--up)"></span>Passed</span>'+
+    '<span><span class="swatch" style="background:var(--orange)"></span>Not passed</span>'+
+    '<span><span class="swatch" style="background:var(--down)"></span>Issue rate</span>'+
+    '<span style="color:var(--muted)">bar height = reviewed</span></div></div>';
+}
+
+/* Dated incident log. Independent of every filter, on all products that have one. */
+function incidentsHTML(){
+  const prod=PRODUCTS.find(p=>p.id===state.product);
+  if(!prod || !prod.incidents) return "";
+  const rows=(state.extras[state.product]||{})[prod.incidents.sheet];
+  if(!rows || !rows.length) return "";
+  const items=rows.map(function(r){
+    return '<li class="ev"><div class="ev-when num">'+
+      (r.at ? esc(r.at.toLocaleDateString("en-IN",{day:"2-digit",month:"short"})) : "\u2014")+'</div>'+
+      '<div class="ev-body"><span class="ev-tag">'+esc(r.by||"\u2014")+'</span>'+
+      '<p>'+esc(r.text)+'</p></div></li>';
+  }).join("");
+  return '<div class="sec"><h2>Delivery incidents</h2>'+
+    '<span class="note">'+rows.length+' logged \u00b7 not affected by the filters above</span></div>'+
+    '<div class="rgrid" style="--cols:1"><section class="rcard ev-card">'+
+    '<div class="rcard-hd"><h3>'+esc(prod.incidents.title||"What affected delivery")+'</h3></div>'+
+    '<ul class="evs">'+items+'</ul></section></div>';
+}
+
+/* Programme list, shared across products and split on its product column. */
+async function loadPrograms(){
+  try{
+    const t=await fetchTable(PROGRAMS_SHEET);
+    const low=t.cols.map(c=>String(c.label||"").trim().toLowerCase());
+    const find=(re,fallback)=>{ const i=low.findIndex(l=>re.test(l)); return i<0?fallback:i; };
+    const pi=find(/^product$/,0), bi=find(/^bucket$|^area$|^theme$/,1), ni=find(/^programs?$|^name$|^item$/,2);
+    return t.rows.map(function(r){
+      const g=i=> (i>=0&&r.c&&r.c[i]&&r.c[i].v!=null) ? String(r.c[i].v).trim() : "";
+      return { product:g(pi), bucket:g(bi)||"Other", name:g(ni) };
+    }).filter(x=>x.name);
+  }catch(e){ return null; }
+}
+function programsHTML(){
+  const all=state.programs;
+  if(!all || !all.length) return "";
+  const want=(PROGRAM_PRODUCTS[state.product]||[]).map(normKey);
+  const mine=all.filter(p=>want.indexOf(normKey(p.product))>=0);
+  if(!mine.length) return "";
+  const buckets=[];
+  mine.forEach(function(p){
+    let b=buckets.find(x=>normKey(x.name)===normKey(p.bucket));
+    if(!b){ b={name:p.bucket, items:[]}; buckets.push(b); }
+    b.items.push(p.name);
+  });
+  const cards=buckets.map(function(b){
+    return '<section class="rcard"><div class="rcard-hd"><h3>'+esc(b.name)+'</h3>'+
+      '<span class="rcard-rate" style="font-size:13px;color:var(--muted)">'+b.items.length+'</span></div>'+
+      '<ul class="progs">'+b.items.map(i=>'<li>'+esc(i)+'</li>').join("")+'</ul></section>';
+  }).join("");
+  return '<div class="sec"><h2>Programs</h2><span class="note">'+mine.length+
+    ' in flight \u00b7 from the '+esc(PROGRAMS_SHEET)+' tab</span></div>'+
+    '<div class="rgrid" style="--cols:'+buckets.length+'">'+cards+'</div>';
+}
+
+/* ---------- selectors ---------- */
+function lanesOf(){ return (PRODUCTS.find(p=>p.id===state.product)||{lanes:[]}).lanes; }
+function laneById(id){ return lanesOf().find(l=>l.id===id); }
+function rowsFor(laneId){
+  return laneSetRows(laneId, raw(laneId)).filter(r=>r.granularity===state.granularity).sort(comparePeriods);
+}
+function laneSetRows(laneId, rows){
+  /* VIN/Spin and Rooftop follow the region chips. Images keeps every set of regions in the lane's
+     own sheet (region_set column, one row per set incl. all regions); 360 and Video keep the subsets
+     in a separate <sheet>_byregion tab. */
+  if(laneId!=="region"){
+    const rk=regionKey();
+    if(rows.some(r=>r.regionSet)){
+      if(rk) rows=rows.filter(r=>r.regionSet===rk);
+      else{   /* all regions: the widest set in the sheet */
+        const n=r=>r.regionSet?r.regionSet.split(",").length:0, max=Math.max.apply(null,rows.map(n));
+        rows=rows.filter(r=>n(r)===max);
+      }
+    } else if(rk){
+      const br=state.data[brKey(laneId)];
+      if(br) rows=br.filter(r=>r.regionSet===rk);
+    }
+  }
+  return rows;
+}
+function allRegions(){
+  const s=new Set();
+  raw("region").forEach(r=>{ if(r.region) s.add(r.region); });
+  return [...s].sort();
+}
+function activeRegions(){
+  const all=allRegions();
+  const sel=all.filter(r=>regSet().has(r));
+  return sel.length?sel:all;
+}
+/* Region sets: the VIN/Spin and Rooftop metrics for every combination of regions, keyed by
+   region_set = sorted region names joined by commas (e.g. "AMER,EMEA"). Images has them in the
+   lane's own sheet; 360/Video in <sheet>_byregion. With every region selected, regionKey() is null. */
+function regionKey(){
+  const a=activeRegions(), all=allRegions();
+  return (a.length && a.length<all.length) ? [...a].sort().join(",") : null;
+}
+function brKey(laneId){ return key(laneId)+"@byregion"; }
+/* null = this product's sheet has no region split yet; the lane then stays on all regions. */
+function hasInlineSets(laneId){ return raw(laneId).some(r=>r.regionSet); }
+function regionSplitMissing(laneId){ return laneId!=="region" && !!regionKey() && !hasInlineSets(laneId) && state.data[brKey(laneId)]===null; }
+async function ensureByRegion(){
+  if(!regionKey()) return false;
+  const lanes=lanesOf().filter(l=>l.dim!=="region" && !hasInlineSets(l.id) && state.data[brKey(l.id)]===undefined);
+  if(!lanes.length) return false;
+  const res=await Promise.all(lanes.map(l=>loadSheet(laneSheet(l)+"_byregion").catch(()=>null)));
+  lanes.forEach((l,i)=>{ state.data[brKey(l.id)]=(res[i]&&res[i].length)?res[i]:null; });
+  return true;
+}
+function col(metricId){ return (SEGMENTS.find(s=>s.id===state.segment)||SEGMENTS[0]).prefix+metricId; }
+/* The weekly report runs W-1 (last complete week) to W-4. W-0, the week in
+   progress, is dropped wherever it turns up. */
+function isShownPeriod(p){ const u=String(p).trim().toUpperCase(); return u!=="W-0" && u!=="D-0"; }
+function periodsOf(){
+  const ls=lanesOf(), a=ls[0]?rowsFor(ls[0].id):[], b=ls[1]?rowsFor(ls[1].id):[];
+  const src=a.length?a:b;
+  const out=[],seen=new Set();
+  src.forEach(r=>{ if(!seen.has(r.period) && isShownPeriod(r.period)){ seen.add(r.period); out.push(r.period); }});
+  if(out.length) return out;
+  const set=new Set(); rowsFor("region").forEach(r=>{ if(isShownPeriod(r.period)) set.add(r.period); });
+  return [...set];
+}
+/* region lane: mean across the regions in play, per period */
+function regionSeries(colName, regionFilter){
+  const rows=rowsFor("region"), keep=regionFilter||activeRegions();
+  const byPeriod=new Map();
+  rows.forEach(r=>{
+    if(!keep.includes(r.region)) return;
+    const val=r.v[colName];
+    if(val==null||isNaN(val)) return;
+    if(!byPeriod.has(r.period)) byPeriod.set(r.period,[]);
+    byPeriod.get(r.period).push(val);
+  });
+  return periodsOf().map(p=>{
+    const a=byPeriod.get(p);
+    return a&&a.length ? a.reduce((x,y)=>x+y,0)/a.length : null;
+  });
+}
+function segPrefix(){ return (SEGMENTS.find(s=>s.id===state.segment)||SEGMENTS[0]).prefix; }
+/* Combine one column across the periods in view. Rates average across regions,
+   totals add up - averaging a cost would understate it badly. */
+function aggSeries(laneId, colName, mode, regionsOverride, skipZero){
+  const gone=v=>(v==null||isNaN(v)||(skipZero&&v===0));
+  if(laneId!=="region"){
+    const map=new Map(rowsFor(laneId).map(r=>[r.period, r.v[colName]]));
+    return periodsOf().map(p=>{ const v=map.get(p); return gone(v)?null:v; });
+  }
+  const keep=regionsOverride||activeRegions();
+  const byPeriod=new Map();
+  rowsFor("region").forEach(r=>{
+    if(keep.indexOf(r.region)<0) return;
+    const v=r.v[colName];
+    if(gone(v)) return;
+    if(!byPeriod.has(r.period)) byPeriod.set(r.period,[]);
+    byPeriod.get(r.period).push(v);
+  });
+  return periodsOf().map(p=>{
+    const a=byPeriod.get(p);
+    if(!a||!a.length) return null;
+    const total=a.reduce((x,y)=>x+y,0);
+    return mode==="sum" ? total : total/a.length;
+  });
+}
+/* Count columns aren't segment-prefixed in every sheet, so try both. */
+function countSeries(laneId, name, prefix, regionsOverride){
+  const px = prefix!=null ? prefix : segPrefix();
+  if(px){
+    /* ent_total_in (images) and total_ent_vin (360) are both in use. */
+    const tries=[ px+name, name.replace(/^total_/, "total_"+px) ];
+    for(let i=0;i<tries.length;i++){
+      if(tries[i]===name) continue;
+      const got=aggSeries(laneId, tries[i], "sum", regionsOverride);
+      if(got.some(v=>v!=null)) return got;
+    }
+  }
+  return aggSeries(laneId, name, "sum", regionsOverride);
+}
+/* Count series for a metric's tooltip, or null when the sheet has no such columns.
+   Read with the segment prefix only - falling back to the all-segment column
+   would put one segment's population next to another's breaches. */
+function tipCounts(laneId, metric, regionsOverride){
+  if(!metric.tip) return null;
+  const px=segPrefix();
+  const n=aggSeries(laneId, px+metric.tip.n, "sum", regionsOverride);
+  const bad=aggSeries(laneId, px+metric.tip.bad, "sum", regionsOverride);
+  const tot=metric.tip.total ? aggSeries(laneId, px+metric.tip.total, "sum", regionsOverride) : null;
+  return n.some(v=>v!=null) ? { n:n, bad:bad, tot:tot } : null;
+}
+/* Same layout as the fulfilment tooltip: period, the counts, then the value.
+   Rooftop cards count rooftops, everything else counts SKUs. */
+function tipHTML(metric, lab, v, counts, i, unit){
+  const line=(k,val)=>'<span style="color:#9DB4B1">'+k+'</span> <b>'+val+'</b>';
+  const num=x=>Math.round(x).toLocaleString("en-IN");
+  const t=metric.tip, n=counts?counts.n[i]:null, bad=counts?counts.bad[i]:null;
+  return [ '<b>'+esc(lab)+'</b>'+(unit&&n!=null?' <span style="color:#9DB4B1">'+esc(unit)+'</span>':''),
+    n!=null?line(t.nLabel, num(n)):null,
+    (n!=null&&bad!=null)?line(t.goodLabel, num(n-bad)):null,
+    bad!=null?line(t.badLabel, num(bad)):null,
+    v!=null?line(esc(metric.label), fmt(metric,v)):null,
+    /* In-progress period: SKUs received too recently to judge. SKU lanes only -
+       rooftop SLA counts rooftops, so the fulfilment total is not comparable. */
+    (t.total && !unit && /^MTD\b/.test(String(lab)) && counts && counts.tot && counts.tot[i]!=null && n!=null && counts.tot[i]-n>0)
+      ? '<span style="color:#9DB4B1">+'+num(counts.tot[i]-n)+' received in the last 6h, not judged yet</span>' : null ].filter(Boolean).join("<br>").replace(/"/g,"&quot;");
+}
+function metricSeries(laneId, metric, prefix, regionsOverride){
+  if(metric.src==="bq") return costSeries(laneId, metric, prefix, regionsOverride);
+  const px = prefix!=null ? prefix : segPrefix();
+  if(metric.agg==="ratio"){
+    const n=aggSeries(laneId, px+metric.num, "sum", regionsOverride);
+    const d=aggSeries(laneId, px+metric.den, "sum", regionsOverride);
+    return n.map((v,i)=> (v==null||d[i]==null||!d[i]) ? null : v/d[i]);
+  }
+  /* A 0% SLA or 0h TAT is a region that did no work that period, not a real
+     reading - averaging it in drags the roll-up down to nothing. */
+  const skipZero = metric.kind==="pct" || metric.kind==="hrs";
+  return aggSeries(laneId, px+metric.id, metric.agg||"mean", regionsOverride, skipZero);
+}
+function valueAt(row, metric, prefix){
+  const px = prefix!=null ? prefix : segPrefix();
+  if(metric.agg==="ratio"){
+    const n=row.v[px+metric.num], d=row.v[px+metric.den];
+    return (n==null||d==null||!d||isNaN(n)||isNaN(d)) ? null : n/d;
+  }
+  const v=row.v[px+metric.id];
+  return (v==null||isNaN(v)) ? null : v;
+}
+function laneSeries(laneId, colName){
+  if(laneId==="region") return regionSeries(colName);
+  const map=new Map(rowsFor(laneId).map(r=>[r.period, r.v[colName]]));
+  return periodsOf().map(p=>{ const v=map.get(p); return (v==null||isNaN(v))?null:v; });
+}
+function lastTwo(series){
+  const idx=[]; series.forEach((v,i)=>{ if(v!=null) idx.push(i); });
+  const n=idx.length;
+  return { cur:n?series[idx[n-1]]:null, prev:n>1?series[idx[n-2]]:null,
+           curIdx:n?idx[n-1]:null, prevIdx:n>1?idx[n-2]:null };
+}
+
+/* ---------- formatting ---------- */
+function fmt(metric,v){
+  if(v==null||isNaN(v)) return "\u2014";
+  if(metric.kind==="pct")  return v.toFixed(1)+"%";
+  if(metric.kind==="int")  return Math.round(v).toLocaleString("en-IN");
+  if(metric.kind==="inr2") return "\u20b9"+v.toFixed(2);
+  if(metric.kind==="inr"){
+    if(v>=1e7) return "\u20b9"+(v/1e7).toFixed(2)+" Cr";
+    if(v>=1e5) return "\u20b9"+(v/1e5).toFixed(2)+" L";
+    return "\u20b9"+Math.round(v).toLocaleString("en-IN");
+  }
+  return v>=100 ? Math.round(v).toLocaleString("en-IN")+"h" : v.toFixed(1)+"h";
+}
+function fmtDelta(metric,cur,prev){
+  if(cur==null||prev==null) return null;
+  if(sameDisplay(metric,cur,prev)) return { txt:"no change", tone:"flat" };
+  const d=cur-prev;
+  const sign=d>=0?"+":"\u2212", a=Math.abs(d);
+  const txt = metric.kind==="pct" ? sign+a.toFixed(1)+" pp"
+    : (metric.kind==="inr"||metric.kind==="inr2"||metric.kind==="int")
+      ? sign+fmt(metric,a).replace("\u20b9","\u20b9")
+      : sign+(a>=100?Math.round(a):a.toFixed(1))+"h";
+  const good = metric.better==="high" ? d>0 : d<0;
+  return { txt, tone: good?"up":"down" };
+}
+function periodName(p){
+  const map={ "MTD":"Month to date","M-1":"Last month","M-2":"2 months back","M-3":"3 months back","M-4":"4 months back",
+              "W-1":"This week","W-2":"Last week","W-3":"2 weeks back","W-4":"3 weeks back" };
+  return map[p]||p;
+}
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+
+/* ---------- svg charts ---------- */
+/* Every line is coloured step by step: each leg is judged only against the
+   point before it, green when the move is good for that metric, red when not. */
+/* Two values that print the same are treated as unchanged. Otherwise a card can
+   read 100.0% -> 100.0% and still colour the leg red, which just looks broken. */
+function sameDisplay(metric,a,b){
+  if(a==null||b==null||isNaN(a)||isNaN(b)) return false;
+  return fmt(metric,a)===fmt(metric,b);
+}
+function stepTone(metric,prev,cur){
+  if(prev==null||cur==null||isNaN(prev)||isNaN(cur)) return "flat";
+  if(sameDisplay(metric,prev,cur)) return "flat";
+  const d=cur-prev;
+  if(Math.abs(d)<0.0005) return "flat";
+  return (metric.better==="high" ? d>0 : d<0) ? "up" : "down";
+}
+function toneColor(t){ return t==="up"?"var(--up)":t==="down"?"var(--down)":"var(--flat)"; }
+/* Keep small movements looking small. */
+function regionColor(r){
+  const i=allRegions().indexOf(r);
+  return SERIES_COLORS[(i<0?0:i)%SERIES_COLORS.length];
+}
+/* One line per region on the region card, coloured to match the chips. */
+/* Percentage as a line against the left axis, counts as bars against the
+   right. Two scales in one card, so both axes are labelled. */
+function sparkCombo(pctSeries, metric, labels, num, den){
+  const pv=pctSeries.filter(v=>v!=null);
+  const cv=den.concat(num).filter(v=>v!=null);
+  if(!pv.length || !cv.length) return sparkline(pctSeries, metric, labels);
+  const W=268,H=140,padT=24,padB=20,padL=26,padR=32;
+  const base=H-padB, n=labels.length, inner=W-padL-padR;
+  const pr=niceRange(metric, Math.min.apply(null,pv), Math.max.apply(null,pv));
+  const pspan=(pr.hi-pr.lo)||1;
+  const cmax=Math.max.apply(null,cv)*1.15 || 1;          // counts read from zero
+  const x=i=> padL+inner*(i+0.5)/n;
+  const yp=v=> padT+(base-padT)*(1-(v-pr.lo)/pspan);
+  const yc=v=> base-(base-padT)*(v/cmax);
+  const slot=(inner/n)*0.56;
+  const fmtC=v=> v>=1000 ? (v/1000).toFixed(v>=10000?0:1)+"k" : String(Math.round(v));
+
+  let svg='<svg class="spark" viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block" '+
+    'role="img" aria-label="'+esc(metric.label)+' with volume">';
+  svg+='<line x1="'+padL+'" y1="'+base+'" x2="'+(W-padR)+'" y2="'+base+'" stroke="var(--hair-strong)" stroke-width="1"/>';
+  for(let k=0;k<=2;k++){
+    const t=k/2, yy=padT+(base-padT)*(1-t);
+    if(k) svg+='<line x1="'+padL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+yy.toFixed(1)+
+               '" stroke="var(--hair)" stroke-width="0.7" stroke-dasharray="2 3"/>';
+    svg+='<text x="'+(padL-4)+'" y="'+(yy+2.4).toFixed(1)+'" text-anchor="end" font-size="6.5" fill="var(--muted)">'+
+         (pr.lo+pspan*t).toFixed(1)+'</text>';
+    svg+='<text x="'+(W-padR+4)+'" y="'+(yy+2.4).toFixed(1)+'" text-anchor="start" font-size="6.5" fill="var(--orange)">'+
+         fmtC(cmax*t)+'</text>';
+  }
+  labels.forEach(function(lab,i){
+    const t=den[i], d=num[i];
+    /* One bar per period: delivered in green from the baseline, the shortfall
+       stacked on top in orange. Numbers live in the tooltip. */
+    const bx=(x(i)-slot/2).toFixed(1);
+    if(d!=null) svg+='<rect x="'+bx+'" y="'+yc(d).toFixed(1)+'" width="'+slot.toFixed(1)+
+      '" height="'+Math.max(0.6,base-yc(d)).toFixed(1)+'" fill="var(--up)" opacity=".9"/>';
+    if(t!=null && d!=null && t>d) svg+='<rect x="'+bx+'" y="'+yc(t).toFixed(1)+'" width="'+slot.toFixed(1)+
+      '" height="'+Math.max(0.6,yc(d)-yc(t)).toFixed(1)+'" rx="1.5" fill="var(--orange)" opacity=".9"/>';
+    else if(t!=null && d==null) svg+='<rect x="'+bx+'" y="'+yc(t).toFixed(1)+'" width="'+slot.toFixed(1)+
+      '" height="'+Math.max(0.6,base-yc(t)).toFixed(1)+'" rx="1.5" fill="var(--orange)" opacity=".9"/>';
+  });
+  labels.forEach(function(lab,i){
+    const t=den[i], d=num[i], p=pctSeries[i];
+    const nm=(metric.combo&&metric.combo.numLabel)||"Delivered";
+    const dn=(metric.combo&&metric.combo.denLabel)||"Total";
+    const line=(k,v)=>'<span style="color:#9DB4B1">'+k+'</span> <b>'+v+'</b>';
+    const body=[ '<b>'+esc(lab)+'</b>',
+      t!=null?line(dn, Math.round(t).toLocaleString("en-IN")):null,
+      d!=null?line(nm, Math.round(d).toLocaleString("en-IN")):null,
+      (t!=null&&d!=null)?line("Shortfall", Math.round(t-d).toLocaleString("en-IN")):null,
+      p!=null?line(esc(metric.label), fmt(metric,p)):null ].filter(Boolean).join("<br>");
+    svg+='<rect class="pt" x="'+(padL+inner*i/n).toFixed(1)+'" y="'+padT+'" width="'+(inner/n).toFixed(1)+
+         '" height="'+(base-padT).toFixed(1)+'" fill="transparent" pointer-events="all" data-tip="'+
+         body.replace(/"/g,"&quot;")+'"></rect>';
+  });
+  const pts=[]; pctSeries.forEach((v,i)=>{ if(v!=null) pts.push([x(i),yp(v),i,v]); });
+  for(let k=1;k<pts.length;k++){
+    const a=pts[k-1],b=pts[k],c=toneColor(stepTone(metric,a[3],b[3]));
+    svg+='<path d="M'+a[0].toFixed(1)+' '+a[1].toFixed(1)+' L'+b[0].toFixed(1)+' '+b[1].toFixed(1)+
+         '" fill="none" stroke="'+c+'" stroke-width="2" stroke-linecap="round"/>';
+  }
+  pts.forEach(function(p,k){
+    const c=toneColor(k===0?stepTone(metric,pts[1]?p[3]:null,pts[1]?pts[1][3]:null):stepTone(metric,pts[k-1][3],p[3]));
+    svg+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="'+(k===pts.length-1?3.2:2.2)+
+         '" fill="'+(k===pts.length-1?c:"var(--panel)")+'" stroke="'+c+'" stroke-width="1.6"/>';
+    svg+='<text x="'+p[0].toFixed(1)+'" y="'+Math.max(9,p[1]-6).toFixed(1)+'" text-anchor="middle" '+
+         'font-size="8.5" font-weight="700" fill="'+c+'">'+fmt(metric,p[3])+'</text>';
+  });
+  labels.forEach((lab,i)=>{
+    svg+='<text x="'+x(i).toFixed(1)+'" y="'+(H-5)+'" text-anchor="middle" font-size="9" fill="var(--muted)">'+esc(lab)+'</text>';
+  });
+  return svg+'</svg>';
+}
+/* Region points: the counts tooltip for that one region, titled with its name. */
+function regionTip(metric, sr, labels, i, v){
+  if(!metric.tip || !sr.counts) return '';
+  return ' data-tip="'+tipHTML(metric, (labels[i]||"")+' · '+sr.name, v, sr.counts, i, null)+'"';
+}
+function sparkMulti(seriesList, metric, labels){
+  const all=[]; seriesList.forEach(s=>s.values.forEach(v=>{ if(v!=null) all.push(v); }));
+  if(all.length<2) return '<div class="spark" style="height:136px"></div>';
+  const W=268,H=140,padT=30,padB=20,padL=12,padR=12;
+  const base=H-padB, n=labels.length;
+  let padTop=padT, bar=null;
+  if(state.chart==="bar"){
+    const m=seriesList.length||1;
+    /* Bars sit in per-period slots, not on the line positions - centring a
+       group on x(0) hangs half of it off the left edge. */
+    const slot=((W-padL-padR)/n) * 0.8;
+    const bw=Math.max(1.3, slot/m);
+    const fs=Math.max(4.8, Math.min(6.4, bw*0.95));
+    /* Labels always sit above their bar, so the plot has to start low enough
+       that even a full-height bar leaves room for one. */
+    const longest=Math.max.apply(null, all.map(v=>fmt(metric,v).length));
+    padTop=Math.min(H*0.46, 7+longest*fs*0.62);
+    bar={m:m, slot:slot, bw:bw, fs:fs};
+  }
+  const sc=makeScale(metric, all, padTop, base);
+  const inner=W-padL-padR;
+  const x=i=> bar ? padL+inner*(i+0.5)/n
+                  : (n>1 ? padL+i*inner/(n-1) : padL+inner/2);
+  const y=sc.y;
+  let svg='<svg class="spark" viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block" '+
+    'role="img" aria-label="'+esc(metric.label)+' by region">';
+  svg+='<line x1="0" y1="'+base+'" x2="'+W+'" y2="'+base+'" stroke="var(--hair-strong)" stroke-width="1"/>';
+  /* Labels sit on their points, and any that would collide is dropped rather
+     than stacked - the strip underneath always carries the current value. */
+  const placed=[];
+  if(bar){
+    /* Coloured by movement, like the VIN and rooftop cards - each bar against
+       that region's own previous period. Hover says which region it is. */
+    seriesList.forEach(function(sr,si){
+      let prev=null;
+      sr.values.forEach(function(v,i){
+        if(v==null) return;
+        const c=toneColor(stepTone(metric, prev, v));
+        prev=v;
+        const cx=x(i)-bar.slot/2+bar.bw*si+bar.bw/2, yy=y(v), h=Math.max(1, base-yy);
+        svg+='<rect class="pt" x="'+(cx-bar.bw/2+0.45).toFixed(1)+'" y="'+yy.toFixed(1)+'" width="'+
+             Math.max(0.9,bar.bw-0.9).toFixed(1)+'" height="'+h.toFixed(1)+
+             '" rx="1" fill="'+c+'" opacity=".9" data-label="'+esc(sr.name)+'" data-x="'+
+             esc(labels[i]||"")+'" data-v="'+esc(fmt(metric,v))+'"'+regionTip(metric, sr, labels, i, v)+'></rect>';
+        svg+='<text transform="translate('+cx.toFixed(1)+','+(yy-2.5).toFixed(1)+') rotate(-90)" '+
+             'text-anchor="start" font-size="'+bar.fs.toFixed(1)+'" font-weight="600" fill="'+
+             c+'">'+fmt(metric,v)+'</text>';
+      });
+    });
+    labels.forEach((lab,i)=>{
+      svg+='<text x="'+x(i).toFixed(1)+'" y="'+(H-5)+'" text-anchor="middle" font-size="10" fill="var(--muted)">'+esc(lab)+'</text>';
+    });
+    return svg+'</svg>';
+  }
+  seriesList.forEach(function(sr){
+    const pts=[];
+    sr.values.forEach((v,i)=>{ if(v!=null) pts.push([x(i),y(v),i,v]); });
+    if(!pts.length) return;
+    for(let k=1;k<pts.length;k++){
+      const a=pts[k-1], b=pts[k];
+      svg+='<path d="M'+a[0].toFixed(1)+' '+a[1].toFixed(1)+' L'+b[0].toFixed(1)+' '+b[1].toFixed(1)+
+           '" fill="none" stroke="'+toneColor(stepTone(metric,a[3],b[3]))+
+           '" stroke-width="1.8" stroke-linecap="round" opacity=".9"/>';
+    }
+    pts.forEach(function(p,k){
+      const isLast=k===pts.length-1;
+      const c=toneColor(stepTone(metric, k?pts[k-1][3]:null, p[3]));
+      svg+='<circle class="pt" cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="'+(isLast?2.8:1.9)+
+           '" fill="'+c+'" data-label="'+esc(sr.name)+'" data-x="'+esc(labels[p[2]]||"")+
+           '" data-v="'+esc(fmt(metric,p[3]))+'"'+regionTip(metric, sr, labels, p[2], p[3])+'></circle>';
+      const ly=p[1]-5;
+      if(ly<9) return;
+      if(placed.some(q=>Math.abs(q[0]-p[0])<26 && Math.abs(q[1]-ly)<7)) return;
+      placed.push([p[0],ly]);
+      svg+='<text x="'+p[0].toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="middle" font-size="8" '+
+           'font-weight="600" fill="'+c+'">'+fmt(metric,p[3])+'</text>';
+    });
+  });
+  labels.forEach((lab,i)=>{
+    svg+='<text x="'+x(i).toFixed(1)+'" y="'+(H-5)+'" text-anchor="middle" font-size="10" fill="var(--muted)">'+esc(lab)+'</text>';
+  });
+  return svg+'</svg>';
+}
+/* One place that decides how values map to pixels, so cards and the trend
+   chart agree. Log needs every value above zero, so it quietly stays linear
+   when a series contains a zero or a blank. */
+function makeScale(metric, vals, padT, base){
+  const useLog = state.scale==="log" && vals.length && Math.min.apply(null,vals)>0;
+  if(useLog){
+    const t=v=>Math.log10(v);
+    let lo=t(Math.min.apply(null,vals)), hi=t(Math.max.apply(null,vals));
+    if(hi-lo<0.08){ const m=(hi+lo)/2; lo=m-0.08; hi=m+0.08; }
+    else { const p=(hi-lo)*0.10; lo-=p; hi+=p; }
+    const span=hi-lo;
+    return { log:true, y:v=>padT+(base-padT)*(1-(t(v)-lo)/span), at:u=>Math.pow(10,lo+span*u) };
+  }
+  const r=niceRange(metric, Math.min.apply(null,vals), Math.max.apply(null,vals));
+  const span=(r.hi-r.lo)||1;
+  return { log:false, y:v=>padT+(base-padT)*(1-(v-r.lo)/span), at:u=>r.lo+span*u };
+}
+function niceRange(metric, min, max){
+  let lo=min, hi=max;
+  const level=Math.abs((min+max)/2)||1;
+  const floor = metric.kind==="pct" ? 2 : level*0.08;
+  /* Nothing moved at all: centre it, and skip the ceiling clamp so a flat 100%
+     doesn't pin to the top and fill the card with one solid block. */
+  if(max===min) return { lo:min-floor/2, hi:min+floor/2 };
+  if(hi-lo < floor){
+    const mid=(hi+lo)/2;
+    lo=mid-floor/2; hi=mid+floor/2;
+  } else {
+    const pad=(hi-lo)*0.12; lo-=pad; hi+=pad;
+  }
+  if(metric.kind==="pct"){
+    if(hi>100){ const over=hi-100; hi-=over; lo-=over; }
+    if(lo<0){ hi-=lo; lo=0; }
+  } else if(lo<0) { hi-=lo; lo=0; }
+  return {lo:lo, hi:hi};
+}
+
+function sparkline(series,metric,labels,counts,unit){
+  const idx=[]; series.forEach((v,i)=>{ if(v!=null) idx.push(i); });
+  if(idx.length<2) return '<div class="spark" style="height:136px"></div>';
+  const W=268,H=140,padT=22,padB=20,padX=24;
+  const vals=idx.map(i=>series[i]);
+  /* Percentages get at least 2pp of visible range, other metrics at least 8%
+     of their own level. Without a floor, a 0.1pp wobble fills the whole card
+     and reads as a collapse. A dead-flat series lands mid-height. */
+  const n=series.length, base=H-padB;
+  const sc=makeScale(metric, vals, padT, base);
+  const x=i=> n>1 ? padX+i*(W-padX*2)/(n-1) : W/2;
+  const y=sc.y;
+  const pts=idx.map(i=>[x(i),y(series[i]),i]);
+  const tones=pts.map((p,k)=> k===0 ? null : stepTone(metric,series[pts[k-1][2]],series[p[2]]));
+  let svg='<svg class="spark" viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block" role="img" aria-label="'+
+    esc(metric.label)+' trend">';
+  svg+='<line x1="0" y1="'+base+'" x2="'+W+'" y2="'+base+'" stroke="var(--hair-strong)" stroke-width="1"/>';
+  const bars=state.chart==="bar";
+  if(bars){
+    const bw=Math.min(26, (n>1 ? (W-padX*2)/(n-1) : W*0.4) * 0.5);
+    pts.forEach(function(p,k){
+      const c=toneColor(k===0?tones[1]:tones[k]);
+      const h=Math.max(1, base-p[1]);
+      svg+='<rect x="'+(p[0]-bw/2).toFixed(1)+'" y="'+p[1].toFixed(1)+'" width="'+bw.toFixed(1)+
+           '" height="'+h.toFixed(1)+'" rx="2" fill="'+c+'" opacity="'+(k===pts.length-1?".95":".55")+'"/>';
+      svg+='<text x="'+p[0].toFixed(1)+'" y="'+Math.max(11,p[1]-6).toFixed(1)+
+           '" text-anchor="middle" font-size="11" font-weight="'+(k===pts.length-1?"700":"600")+
+           '" fill="'+c+'">'+fmt(metric,series[p[2]])+'</text>';
+    });
+  } else {
+  for(let k=1;k<pts.length;k++){
+    const a=pts[k-1],b=pts[k],c=toneColor(tones[k]);
+    svg+='<path d="M'+a[0].toFixed(1)+' '+a[1].toFixed(1)+' L'+b[0].toFixed(1)+' '+b[1].toFixed(1)+
+         ' L'+b[0].toFixed(1)+' '+base+' L'+a[0].toFixed(1)+' '+base+' Z" fill="'+c+'" opacity=".12"/>';
+    svg+='<path d="M'+a[0].toFixed(1)+' '+a[1].toFixed(1)+' L'+b[0].toFixed(1)+' '+b[1].toFixed(1)+
+         '" fill="none" stroke="'+c+'" stroke-width="2" stroke-linecap="round"/>';
+  }
+  pts.forEach((p,k)=>{
+    const isLast=k===pts.length-1;
+    const c=toneColor(k===0?tones[1]:tones[k]);
+    svg+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="'+(isLast?3.6:2.3)+
+         '" fill="'+(isLast?c:"var(--panel)")+'" stroke="'+c+'" stroke-width="1.8"/>';
+    svg+='<text x="'+p[0].toFixed(1)+'" y="'+Math.max(11,p[1]-9).toFixed(1)+
+         '" text-anchor="middle" font-size="11" font-weight="'+(isLast?"700":"600")+
+         '" fill="'+(k===0?"var(--ink-2)":c)+'">'+fmt(metric,series[p[2]])+'</text>';
+  });
+  }
+  /* Hover strips, one per period, carrying the counts tooltip. */
+  if(metric.tip && labels){
+    const step = n>1 ? (W-padX*2)/(n-1) : W;
+    labels.forEach(function(lab,i){
+      if(series[i]==null && !(counts&&counts.n[i]!=null)) return;
+      const x0=Math.max(0, x(i)-step/2), x1=Math.min(W, x(i)+step/2);
+      svg+='<rect class="pt" x="'+x0.toFixed(1)+'" y="0" width="'+(x1-x0).toFixed(1)+'" height="'+base+
+           '" fill="transparent" pointer-events="all" data-tip="'+tipHTML(metric, lab, series[i], counts, i, unit)+'"></rect>';
+    });
+  }
+  (labels||[]).forEach((lab,i)=>{
+    svg+='<text x="'+x(i).toFixed(1)+'" y="'+(H-5)+'" text-anchor="middle" font-size="10.5" fill="var(--muted)">'+esc(lab)+'</text>';
+  });
+  return svg+'</svg>';
+}
+
+function lineChart(seriesList, labels, metric, colorMode){
+  const all=[]; seriesList.forEach(s=>s.values.forEach(v=>{ if(v!=null) all.push(v); }));
+  if(!all.length) return '<div class="state"><h3>No numbers here yet</h3><p>Nothing in this sheet matches the current filters. Widen the region or segment filter.</p></div>';
+  const W=1000,H=430,L=62,R=26,T=34,B=42;
+  const n=labels.length;
+  const sc=makeScale(metric, all, T, H-B);
+  const inner=W-L-R, bars=state.chart==="bar";
+  const x=i=> bars ? L+inner*(i+0.5)/n
+                   : L+(n>1 ? i*inner/(n-1) : inner/2);
+  const y=sc.y;
+  let svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="430" role="img" aria-label="Trend chart">';
+  const ticks=5;
+  for(let i=0;i<=ticks;i++){
+    const v=sc.at(i/ticks), yy=y(v);
+    svg+='<line x1="'+L+'" y1="'+yy.toFixed(1)+'" x2="'+(W-R)+'" y2="'+yy.toFixed(1)+'" stroke="var(--hair)" stroke-width="1"'+(i?' stroke-dasharray="3 4"':'')+'/>';
+    svg+='<text x="'+(L-10)+'" y="'+(yy+4).toFixed(1)+'" text-anchor="end" font-size="11" fill="var(--muted)">'+
+         (metric.kind==="pct"?v.toFixed(1):(v>=100?Math.round(v):v.toFixed(1)))+'</text>';
+  }
+  labels.forEach((lab,i)=>{
+    svg+='<text x="'+x(i).toFixed(1)+'" y="'+(H-16)+'" text-anchor="middle" font-size="12" font-weight="500" fill="var(--ink-2)">'+esc(lab)+'</text>';
+  });
+  svg+='<text x="'+(L-10)+'" y="16" text-anchor="end" font-size="10.5" fill="var(--muted)">'+
+       (metric.kind==="pct"?"%":"hours")+'</text>';
+  const placed=[];
+  const byMove = colorMode==="movement";
+  if(bars){
+    const m=seriesList.length||1;
+    const slot=(inner/n) * 0.8;
+    const bw=Math.max(2, slot/m);
+    seriesList.forEach(function(sr,si){
+      const color=sr.color||SERIES_COLORS[si%SERIES_COLORS.length];
+      const vals=sr.values;
+      vals.forEach(function(v,i){
+        if(v==null) return;
+        const cx=x(i)-slot/2+bw*si+bw/2, yy=y(v), h=Math.max(1,(H-B)-yy);
+        const tone = byMove ? toneColor(stepTone(metric, i>0?vals[i-1]:null, v)) : color;
+        svg+='<rect class="pt" x="'+(cx-bw/2+0.8).toFixed(1)+'" y="'+yy.toFixed(1)+'" width="'+
+             Math.max(1.5,bw-1.6).toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2" fill="'+tone+'" opacity=".88" '+
+             'data-label="'+esc(sr.name)+'" data-x="'+esc(labels[i]||"")+'" data-v="'+esc(fmt(metric,v))+'"></rect>';
+        const ly=yy-6;
+        if(ly>=14 && !placed.some(q=>Math.abs(q[0]-cx)<40 && Math.abs(q[1]-ly)<12)){
+          placed.push([cx,ly]);
+          svg+='<text x="'+cx.toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="middle" font-size="10.5" '+
+               'font-weight="600" fill="'+tone+'">'+esc(fmt(metric,v))+'</text>';
+        }
+      });
+    });
+    svg+='</svg>';
+    return svg;
+  }
+  seriesList.forEach((s,si)=>{
+    const color=s.color||SERIES_COLORS[si%SERIES_COLORS.length];
+    const pts=[];
+    s.values.forEach((v,i)=>{ if(v!=null) pts.push([x(i),y(v),i,v]); });
+    const tones=pts.map((p,k)=> k===0 ? null : stepTone(metric,pts[k-1][3],p[3]));
+    if(byMove){
+      for(let k=1;k<pts.length;k++){
+        const a=pts[k-1],b=pts[k];
+        svg+='<path d="M'+a[0].toFixed(1)+' '+a[1].toFixed(1)+' L'+b[0].toFixed(1)+' '+b[1].toFixed(1)+
+             '" fill="none" stroke="'+toneColor(tones[k])+'" stroke-width="2.6" stroke-linecap="round"/>';
+      }
+    } else if(pts.length>1){
+      svg+='<path d="'+pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ")+
+           '" fill="none" stroke="'+color+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>';
+    }
+    pts.forEach((p,pi)=>{
+      const tc = byMove ? toneColor(pi===0?tones[1]:tones[pi]) : color;
+      svg+='<circle class="pt" cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="4.5" fill="'+
+           (byMove?tc:"var(--panel)")+'" stroke="'+(byMove?"var(--panel)":color)+'" stroke-width="'+(byMove?1.4:2.2)+'" '+
+           'data-label="'+esc(s.name)+'" data-x="'+esc(labels[p[2]]||"")+'" data-v="'+esc(fmt(metric,p[3]))+'"></circle>';
+      const up = si%2===0;
+      const ly = up ? Math.max(16,p[1]-13) : Math.min(H-B-6,p[1]+20);
+      const clash = placed.some(q=>Math.abs(q[0]-p[0])<44 && Math.abs(q[1]-ly)<13);
+      if(!clash){
+        placed.push([p[0],ly]);
+        svg+='<text x="'+p[0].toFixed(1)+'" y="'+ly.toFixed(1)+
+             '" text-anchor="middle" font-size="11.5" font-weight="600" fill="'+tc+'">'+esc(fmt(metric,p[3]))+'</text>';
+      }
+    });
+  });
+  svg+='</svg>';
+  return svg;
+}
+
+function heatStyle(metric,v,min,max){
+  if(v==null||isNaN(v)||max===min) return "background:var(--panel-sunk);color:var(--muted)";
+  let t=(v-min)/(max-min);
+  if(metric.better==="low") t=1-t;
+  const good=[27,122,70], bad=[179,38,30];
+  const mix=t*t*(3-2*t);
+  const r=Math.round(bad[0]+(good[0]-bad[0])*mix),
+        g=Math.round(bad[1]+(good[1]-bad[1])*mix),
+        b=Math.round(bad[2]+(good[2]-bad[2])*mix);
+  const alpha=0.10+0.20*Math.abs(mix-0.5)*2;
+  return "background:rgba("+r+","+g+","+b+","+alpha.toFixed(2)+");color:rgb("+
+         Math.round(r*0.65)+","+Math.round(g*0.65)+","+Math.round(b*0.65)+")";
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+let stickyH=0;
+function syncSticky(){
+  const m=document.querySelector(".mast");
+  if(!m) return;
+  const h=m.offsetHeight;
+  if(h!==stickyH){ stickyH=h; document.documentElement.style.setProperty("--mastH", h+"px"); }
+}
+/* ---------- pipeline breakdown ---------- */
+const PIPE_STAGES=[
+  { id:"proc_queue", label:"Processing Queue",         n:"e2e_n",        c:"var(--s5)" },
+  { id:"processing", label:"Processing",               n:"e2e_n",        c:"var(--s1)" },
+  { id:"qc_queue",   label:"QC Queue",                 n:"qc_queue_n",   c:"var(--orange)" },
+  { id:"qc_review",  label:"QC Review (incl. rework)", n:"qc_review_n",  c:"var(--s3)" },
+  { id:"publishing", label:"Publishing",               n:"publishing_n", c:"var(--s2)" },
+  { id:"other",      label:"Other",                    n:null,           c:"var(--hair-strong)" }
+];
+const PIPE_SEG={ all:"All", ent:"Ent", mid:"Mid", resellers:"Resellers", smb:"SMB" };
+async function loadPipe(sheet){
+  const t=await fetchTable(sheet);
+  const labels=t.cols.map(c=>String(c.label||"").trim());
+  return t.rows.map(r=>{
+    const o={};
+    labels.forEach((l,i)=>{ const c=r.c&&r.c[i]; o[l]=c&&c.v!=null&&c.v!=="" ? c.v : null; });
+    return o;
+  }).filter(o=>o.period);
+}
+/* Rows for the current segment and region chips; all regions = the widest region_set. */
+function pipeRows(){
+  const rows=(state.pipes[state.product]||[]).filter(r=>r.segment===PIPE_SEG[state.segment]);
+  const rk=regionKey();
+  if(rk) return rows.filter(r=>r.region_set===rk);
+  const n=r=>r.region_set?String(r.region_set).split(",").length:0, max=Math.max.apply(null,rows.map(n));
+  return rows.filter(r=>n(r)===max);
+}
+/* Monday-start weeks, W-1 = last complete week (same as the cards). */
+function pipeRange(per){
+  const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-((d.getDay()+6)%7));
+  const f=x=>x.toLocaleDateString("en-IN",{day:"2-digit",month:"short"});
+  const k=per==="L4W"?4:parseInt(String(per).slice(2),10);
+  const a=new Date(d); a.setDate(a.getDate()-7*k);
+  const b=new Date(d); b.setDate(b.getDate()-(per==="L4W"?1:7*(k-1)+1));
+  return f(a)+" – "+f(b);
+}
+function pipeHTML(){
+  const prod=curProduct(); if(!prod.pipeline) return "";
+  const sla=prod.pipeline.slaHrs;
+  const head='<div class="sec"><h2>Pipeline breakdown</h2><div class="seg">'+
+    ["W-4","W-3","W-2","W-1","L4W"].map(p=>'<button data-pp="'+p+'" aria-pressed="'+(state.pipePeriod===p)+'">'+
+      (p==="L4W"?"Last 4 weeks":p)+'</button>').join("")+'</div>'+
+    '<span class="note">'+esc(pipeRange(state.pipePeriod))+' · complete weeks · follows the segment and region filters</span></div>';
+  const data=state.pipes[state.product];
+  if(data===null || (data && !data.length))
+    return head+'<div class="state"><p>The <code>'+esc(prod.pipeline.sheet)+'</code> tab couldn’t be read.</p></div>';
+  if(!data) return "";
+  const rows=pipeRows(), r=rows.find(x=>x.period===state.pipePeriod);
+  if(!r || !r.e2e_n) return head+'<div class="state"><p>No delivered SKUs for this selection.</p></div>';
+  const h=v=>v==null?"—":(+v).toFixed(2)+"h", n=v=>(v==null?0:+v).toLocaleString("en-IN");
+  const pc=v=>v==null?"—":(+v).toFixed(1)+"%";
+  const over=v=>v!=null&&+v>sla?' class="over"':'';
+
+  const bar=PIPE_STAGES.map(s=>{
+    const sh=Math.max(0,+r[s.id+"_share_pct"]||0); if(!sh) return "";
+    const tip='<b>'+esc(s.label)+'</b><br>'+pc(sh)+' of End-to-End time · avg '+h(r[s.id+"_avg_hrs"])+
+      (s.n?'<br>'+n(r[s.n])+' SKUs':'');
+    return '<i class="pt" style="flex:'+sh+';background:'+s.c+'" data-tip="'+esc(tip)+'"></i>';
+  }).join("");
+  const leg=PIPE_STAGES.map(s=>'<span><i class="swatch" style="background:'+s.c+'"></i>'+esc(s.label)+
+    ' <b class="num">'+pc(r[s.id+"_share_pct"])+'</b></span>').join("");
+
+  const row=(lab,p90,p95,p99,avg,sh,cnt,cls)=>'<tr'+(cls?' class="'+cls+'"':'')+'><td>'+lab+'</td>'+
+    '<td>'+h(p90)+'</td><td'+over(p95)+'>'+h(p95)+'</td><td'+over(p99)+'>'+h(p99)+'</td>'+
+    '<td>'+h(avg)+'</td><td>'+(sh===undefined?"":pc(sh))+'</td><td>'+(cnt==null?"":n(cnt))+'</td></tr>';
+  let body="";
+  PIPE_STAGES.forEach(s=>{
+    if(s.id==="other"){ body+=row(esc(s.label),null,null,null,r.other_avg_hrs,r.other_share_pct,null); return; }
+    body+=row(esc(s.label),r[s.id+"_p90_hrs"],r[s.id+"_p95_hrs"],r[s.id+"_p99_hrs"],r[s.id+"_avg_hrs"],r[s.id+"_share_pct"],r[s.n]);
+    if(s.id==="publishing"){
+      body+=row("via FTP / partner publish",null,r.publishing_ftp_p95_hrs,r.publishing_ftp_p99_hrs,r.publishing_ftp_avg_hrs,undefined,r.delivered_ftp_n,"sub");
+      body+=row("via API webhook",null,r.publishing_api_p95_hrs,r.publishing_api_p99_hrs,r.publishing_api_avg_hrs,undefined,r.delivered_api_n,"sub");
+    }
+  });
+  body+=row("End-to-End",r.e2e_p90_hrs,r.e2e_p95_hrs,r.e2e_p99_hrs,r.e2e_avg_hrs,100,r.e2e_n,"tot");
+  const tot=+r.e2e_n||1, mix=[["FTP / partner publish",r.delivered_ftp_n],["API webhook",r.delivered_api_n],["At QC done (no push)",r.delivered_qc_done_n]]
+    .map(m=>'<span>'+m[0]+' <b class="num">'+n(m[1])+'</b> ('+(100*(+m[1]||0)/tot).toFixed(1)+'%)</span>').join("");
+
+  /* P95 by stage, week by week */
+  const weeks=["W-4","W-3","W-2","W-1"], wk=weeks.map(w=>rows.find(x=>x.period===w)||{});
+  const trows=PIPE_STAGES.filter(s=>s.id!=="other").concat([{id:"e2e",label:"End-to-End"}]).map(s=>{
+    const vals=wk.map(x=>x[s.id+"_p95_hrs"]), mx=Math.max.apply(null,vals.map(v=>v==null?-1:+v));
+    return '<tr'+(s.id==="e2e"?' class="tot"':'')+'><td>'+esc(s.label)+'</td>'+vals.map(v=>
+      '<td class="'+(v!=null&&+v>sla?"over":(v!=null&&+v===mx&&s.id!=="e2e"?"peak":""))+'">'+h(v)+'</td>').join("")+'</tr>';
+  }).join("");
+
+  return head+'<div class="rgrid pipe-grid">'+
+    '<section class="rcard pipe-card"><div class="rcard-hd"><h3>Where the time goes</h3>'+
+      '<span class="rcard-rate num">'+h(r.e2e_p95_hrs)+' <span style="font-size:12px;color:var(--muted);font-weight:450">End-to-End P95</span></span></div>'+
+      '<div class="rcard-sub"><span>Share of total End-to-End hours</span><span>'+n(r.e2e_n)+' delivered SKUs</span></div>'+
+      '<div class="pipe-bar">'+bar+'</div><div class="pipe-leg">'+leg+'</div>'+
+      '<div class="pipe-scroll"><table class="ptab" style="margin-top:14px"><tr><th>Stage</th><th>P90</th><th>P95</th><th>P99</th><th>Avg</th><th>Share</th><th>SKUs</th></tr>'+body+'</table></div>'+
+      '<div class="pipe-mix"><span>Delivered by</span>'+mix+'</div>'+
+      '<p class="note" style="font-size:11.5px;color:var(--muted);margin:6px 0 8px">Each SKU’s stages add up to its End-to-End TAT (processing start → delivery). '+
+      'QC stages cover QC’d SKUs, Publishing covers pushed SKUs; values over '+sla+'h are red.</p></section>'+
+    (state.pipePeriod==="L4W" ? '<section class="rcard"><div class="rcard-hd"><h3>P95 by stage, week by week</h3></div>'+
+      '<div class="rcard-sub"><span>Bold = the worst week for that stage</span><span>hours</span></div>'+
+      '<div class="pipe-scroll"><table class="ptab"><tr><th>Stage</th>'+weeks.map(w=>'<th>'+w+'<br><span style="text-transform:none;letter-spacing:0">'+esc(pipeRange(w))+'</span></th>').join("")+'</tr>'+trows+'</table></div>'+
+      '<div style="height:8px"></div></section>' : '')+
+    '</div>';
+}
+
+function render(){
+  renderTabs();
+  renderSync();
+  const prod=PRODUCTS.find(p=>p.id===state.product);
+  const main=document.getElementById("main");
+
+  if(prod.status!=="live"){
+    main.innerHTML=
+      '<div class="state soon state--full" style="margin-top:32px">'+
+        '<h3>'+esc(prod.label)+' isn\u2019t wired up yet</h3>'+
+        '<p>The workbook doesn\u2019t feed this tab yet. Once the '+esc(prod.label)+
+        ' sheets are ready, add them to the <code>PRODUCTS</code> list at the top of this file and flip the status to live \u2014 '+
+        'every filter, chart and table below carries over unchanged.</p>'+
+      '</div>';
+    return;
+  }
+  state.trendMetric  = remapMetric(state.trendMetric);
+  state.matrixMetric = remapMetric(state.matrixMetric);
+  if(!laneById(state.matrixLane))  state.matrixLane=lanesOf()[0].id;
+  if(!laneById(state.recordsLane)){ state.recordsLane=lanesOf()[0].id; state.sortCol=null; }
+  if(state.loading && !raw(lanesOf()[0].id).length){
+    main.innerHTML='<div class="state" style="margin-top:32px"><h3>Pulling the workbook</h3><p>Reading images_vin, images_rt and images_region.</p></div>';
+    return;
+  }
+  if(state.error){
+    main.innerHTML='<div class="state" style="margin-top:32px"><h3>Couldn\u2019t read the sheet</h3><p>'+esc(state.error)+
+      '</p><p style="margin-top:10px">The workbook has to be shared as \u201cAnyone with the link \u2014 Viewer\u201d for this page to read it.</p>'+
+      '<button class="btn" id="retryBtn">Try again</button></div>';
+    document.getElementById("retryBtn").onclick=loadAll;
+    return;
+  }
+
+  /* The page ends after the fixed panels. Trend, drill-down and the admin
+     blocks are still built by the functions below - add them back to this list
+     to restore them. */
+  main.innerHTML =
+    controlsHTML() +
+    glanceHTML() +
+    pipeHTML() +
+    qualityHTML() +
+    extraHTML() +
+    incidentsHTML() +
+    programsHTML() +
+    (isAdmin() ? footHTML() : "");
+  wire();
+  syncSticky();
+}
+
+function renderTabs(){
+  if(!state.user || state.denied){ document.getElementById("prodTabs").innerHTML=""; return; }
+  document.getElementById("prodTabs").innerHTML=PRODUCTS.map(p=>
+    '<button class="prod" role="tab" data-prod="'+p.id+'" aria-selected="'+(p.id===state.product)+'">'+
+      esc(p.label)+'<span class="tag">'+(p.status==="live"?"Live":"Soon")+'</span></button>').join("");
+  document.querySelectorAll("[data-prod]").forEach(b=>b.onclick=()=>{
+    state.product=b.dataset.prod;
+    /* Daily only exists on Video; leaving it falls back to Weekly. */
+    if(state.granularity==="day" && state.product!=="video") state.granularity="week";
+    const p=PRODUCTS.find(x=>x.id===state.product);
+    const first=p&&p.lanes[0];
+    const needSheets=p&&p.status==="live"&&first&&!state.data[key(first.id)];
+    const needExtras=p&&p.status==="live"&&panelsOf(p).length&&!state.extras[p.id];
+    const needQuality=p&&p.status==="live"&&p.quality&&!state.qualities[p.id];
+    if(needSheets||needExtras||needQuality) loadAll(); else render();
+  });
+}
+function renderSync(){
+  const el=document.getElementById("syncTxt");
+  const btn=document.getElementById("refreshBtn");
+  const who=document.getElementById("who");
+  if(!state.user){ el.innerHTML=""; btn.hidden=true; if(who) who.innerHTML=""; return; }
+  btn.hidden=!!state.denied;
+  if(state.denied) el.innerHTML="";
+  if(who){
+    who.innerHTML='<span class="who-mail">'+esc(state.user.email)+'</span>'+
+      '<span class="role'+(state.user.admin?" admin":"")+'">'+(state.user.admin?"Admin":"Viewer")+'</span>'+
+      '<button class="linky-dark" id="signOutBtn">Sign out</button>';
+    const so=document.getElementById("signOutBtn");
+    if(so) so.onclick=signOut;
+  }
+  btn.disabled=state.loading;
+  btn.textContent=state.loading?"Refreshing\u2026":"Refresh data";
+  if(state.error) el.innerHTML='<span class="dot err"></span>Sheet unreachable';
+  else if(state.loading) el.innerHTML='<span class="dot"></span>Reading the workbook\u2026';
+  else if(state.synced) el.innerHTML='<span class="dot"></span>Synced '+state.synced.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})+
+       ' \u00b7 '+state.synced.toLocaleDateString("en-IN",{day:"numeric",month:"short"});
+  else el.innerHTML='<span class="dot"></span>Ready';
+}
+
+function controlsHTML(){
+  const regs=allRegions();
+  return '<div class="controls">'+
+    '<div class="ctl"><span>Period</span><div class="seg">'+
+      /* Daily is Video-only for now - only the video sheets carry period_type=Daily rows. */
+      (state.product==="video" ? '<button data-gran="day" aria-pressed="'+(state.granularity==="day")+'">Daily</button>' : '')+
+      '<button data-gran="week"  aria-pressed="'+(state.granularity==="week")+'">Weekly</button>'+
+      '<button data-gran="month" aria-pressed="'+(state.granularity==="month")+'">Monthly</button>'+
+    '</div></div>'+
+    '<div class="ctl"><span>Segment</span><div class="chips">'+
+      SEGMENTS.map(s=>'<button class="chip" data-seg="'+s.id+'" aria-pressed="'+(s.id===state.segment)+'">'+esc(s.label)+'</button>').join("")+
+    '</div></div>'+
+    (curProduct().vfToggle
+      ? '<div class="ctl"><span title="Spins that failed validation (dealer input), e.g. too few or unusable images">Validation Failed</span><div class="seg">'+
+          '<button data-vf="0" aria-pressed="'+(!state.includeVF)+'">Excluded</button>'+
+          '<button data-vf="1" aria-pressed="'+state.includeVF+'">Included</button>'+
+        '</div></div>'
+      : '')+
+    (COST && !state.cost ? '<div class="ctl"><button class="chip" id="bqBtn"'+
+       (state.costError ? ' title="'+esc(state.costError)+'"' : '')+'>'+
+       (state.costError ? "Cost unavailable \u2014 retry" : "Connect BigQuery for cost")+'</button>'+
+       (state.costError ? '<span class="note" style="max-width:46ch;color:var(--down)">'+
+          esc(state.costError.slice(0,160))+'</span>' : '')+'</div>' : '')+
+    (regs.length?'<div class="ctl"><span>Regions</span><div class="chips">'+
+      regs.map(r=>'<button class="chip chip-r" data-region="'+esc(r)+'" aria-pressed="'+regSet().has(r)+
+        '"><span class="swatch" style="background:'+regionColor(r)+'"></span>'+esc(r)+'</button>').join("")+
+      '</div><button class="linky" id="regAll">'+(regSet().size===regs.length?"Clear all":"Select all")+'</button></div>':'')+
+  '</div>';
+}
+
+function glanceHTML(){
+  const segLabel=(SEGMENTS.find(s=>s.id===state.segment)||SEGMENTS[0]).label.toLowerCase();
+  const periods=periodsOf();
+  const latest=periods.length?periods[periods.length-1]:"";
+  const lanes=lanesOf(), ms=metricsOf().filter(m=>!state.hiddenCards.has(m.id));
+
+  let html='<div class="sec"><h2>At a glance</h2><span class="note">'+
+    esc(periodName(latest))+' \u00b7 '+esc(segLabel)+' \u00b7 change is against the period before it'+
+    (state.costLatest ? ' \u00b7 <b style="color:var(--warn)">cost data only to '+
+       esc(new Date(state.costLatest+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short"}))+
+       '</b>' : '')+'</span>'+
+    '<div class="sec-tools"><span class="note">Chart</span><div class="seg">'+
+      [["line","Line"],["bar","Bar"]].map(o=>'<button data-chart="'+o[0]+'" aria-pressed="'+
+        (o[0]===state.chart)+'">'+o[1]+'</button>').join("")+'</div>'+
+    '<span class="note" style="margin-left:6px">Scale</span><div class="seg">'+
+      [["linear","Linear"],["log","Log"]].map(o=>'<button data-scale="'+o[0]+'" aria-pressed="'+
+        (o[0]===state.scale)+'">'+o[1]+'</button>').join("")+'</div>'+
+    '<span class="note" style="margin-left:6px">Cards</span>'+
+      metricsOf().map(x=>'<button class="chip chip-sm" data-card="'+x.id+'" aria-pressed="'+
+        (!state.hiddenCards.has(x.id))+'">'+esc(x.label)+'</button>').join("")+
+    '</div></div>';
+
+  /* A single grid, filled row by row, so card N of every lane shares a row and
+     therefore a height. Separate per-lane columns could never guarantee that. */
+  html+='<div class="lanes" style="--lanes:'+lanes.length+'">';
+  lanes.forEach(function(lane){
+    html+='<div class="lane-hd"><h3><span class="swatch" style="background:'+lane.color+'"></span>'+
+      esc(lane.label)+'</h3><span class="sub">'+esc(lane.blurb)+
+      (lane.id==="region"?' \u00b7 '+activeRegions().length+' of '+allRegions().length
+        : regionKey() ? (regionSplitMissing(lane.id) ? ' \u00b7 all regions (no region split for this sheet yet)'
+                                                     : ' \u00b7 '+esc(activeRegions().join(", "))) : '')+'</span></div>';
+  });
+  ms.forEach(function(m){
+    lanes.forEach(function(lane){
+      const series=metricSeries(lane.id,m);
+      const t=lastTwo(series), d=fmtDelta(m,t.cur,t.prev);
+      const perRegion = lane.id==="region"
+        ? activeRegions().map(r=>({ name:r, color:regionColor(r),
+                                    values:metricSeries("region",m,null,[r]),
+                                    counts:tipCounts("region",m,[r]) }))
+        : null;
+      const counts=tipCounts(lane.id, m, lane.id==="region"?activeRegions():null);
+      html+='<article class="card"><div class="card-top"><span class="name">'+esc(m.label)+
+        (lane.id==="region"?' <span style="font-weight:400;color:var(--muted)">'+
+          ((m.agg==="sum")?"total":"avg")+'</span>':'')+'</span>'+
+        '<span style="display:flex;align-items:center;gap:8px">'+
+        (d?'<span class="delta '+d.tone+'">'+d.txt+'</span>':'')+
+        '<button class="hide-x" data-card="'+m.id+'" title="Hide this card" aria-label="Hide '+esc(m.label)+'">\u00d7</button>'+
+        '</span></div>'+
+        '<div class="val num">'+fmt(m,t.cur)+'</div>'+
+        '<div class="cmp num">'+(t.prev!=null?"was "+fmt(m,t.prev):"no prior period")+'</div>'+
+        (m.combo
+           ? sparkCombo(series, m, periods,
+               countSeries(lane.id, m.combo.num, null, lane.id==="region"?activeRegions():null),
+               countSeries(lane.id, m.combo.den, null, lane.id==="region"?activeRegions():null))
+           : (perRegion && perRegion.length
+                ? sparkMulti(perRegion,m,periods)
+                : sparkline(series,m,periods,counts,lane.tipUnit||null)))+'</article>';
+    });
+  });
+  return html+'</div>';
+}
+
+function trendSeries(){
+  const m=metricById(state.trendMetric);
+  const c=col(m.id);
+  const roll = m.agg==="mean"||!m.agg ? " (avg)" : " (total)";
+  if(state.trendSplit==="lane")
+    return lanesOf().map(l=>({ name:l.label+(l.id==="region"?roll:""), values:metricSeries(l.id,m) }));
+  if(state.trendSplit==="segment")
+    return SEGMENTS.map(s=>({ name:s.label, values:metricSeries(state.matrixLane,m,s.prefix) }));
+  return activeRegions().map(r=>({ name:r, values:metricSeries("region",m,null,[r]) }));
+}
+function trendHTML(){
+  const m=metricById(state.trendMetric);
+  const labels=periodsOf();
+  const all=trendSeries().map((sr,i)=>Object.assign({},sr,{color:SERIES_COLORS[i%SERIES_COLORS.length]}));
+  const shown=all.filter(sr=>!state.hidden.has(sr.name));
+  const colorMode = state.colorMode==="auto" ? (shown.length===1?"movement":"series") : state.colorMode;
+  const splitNote = state.trendSplit==="segment"
+    ? "Segment split reads from the "+esc((laneById(state.matrixLane)||{}).label||"")+" sheet."
+    : (state.trendSplit==="region" ? "One line per selected region." : "VIN and rooftop as reported; region is the mean of the selected regions.");
+
+  const summary=all.map(sr=>{
+    const vals=sr.values.map((v,i)=>[v,i]).filter(p=>p[0]!=null);
+    const t=lastTwo(sr.values), d=fmtDelta(m,t.cur,t.prev);
+    let best=null,worst=null;
+    vals.forEach(p=>{
+      if(best===null || (m.better==="high" ? p[0]>best[0] : p[0]<best[0])) best=p;
+      if(worst===null || (m.better==="high" ? p[0]<worst[0] : p[0]>worst[0])) worst=p;
+    });
+    return '<tr'+(state.hidden.has(sr.name)?' style="opacity:.4"':'')+'>'+
+      '<td><span class="swatch" style="background:'+sr.color+';margin-right:8px"></span>'+esc(sr.name)+'</td>'+
+      '<td class="num" style="font-weight:600">'+fmt(m,t.cur)+'</td>'+
+      '<td class="num">'+fmt(m,t.prev)+'</td>'+
+      '<td>'+(d?'<span class="delta '+d.tone+'">'+d.txt+'</span>':"\u2014")+'</td>'+
+      '<td class="num">'+(best?fmt(m,best[0])+'  <span style="color:var(--muted)">'+esc(labels[best[1]]||"")+'</span>':"\u2014")+'</td>'+
+      '<td class="num">'+(worst?fmt(m,worst[0])+'  <span style="color:var(--muted)">'+esc(labels[worst[1]]||"")+'</span>':"\u2014")+'</td>'+
+      '</tr>';
+  }).join("");
+
+  return '<div class="sec"><h2>Trend</h2><span class="note">'+splitNote+' Click a name to hide its line.'+(colorMode==="movement"?' Each leg is green or red against the point before it.':'')+'</span></div>'+
+    '<div class="panel"><div class="panel-hd">'+
+      '<div class="ctl"><span>Metric</span><div class="seg">'+
+        metricsOf().map(x=>'<button data-tm="'+x.id+'" aria-pressed="'+(x.id===state.trendMetric)+'">'+esc(x.label)+'</button>').join("")+
+      '</div></div>'+
+      '<div class="ctl"><span>Split by</span><div class="seg">'+
+        [["lane","Cut"],["segment","Segment"],["region","Region"]].map(o=>
+          '<button data-split="'+o[0]+'" aria-pressed="'+(o[0]===state.trendSplit)+'">'+o[1]+'</button>').join("")+
+      '</div></div>'+
+      '<div class="ctl"><span>Colour</span><div class="seg">'+
+        [["movement","Movement"],["series","Series"]].map(o=>
+          '<button data-cmode="'+o[0]+'" aria-pressed="'+(o[0]===colorMode)+'">'+o[1]+'</button>').join("")+
+      '</div></div>'+
+    '</div>'+
+    (shown.length ? lineChart(shown,labels,m,colorMode)
+      : '<div class="state"><h3>Every line is hidden</h3><p>Click a name below to bring it back.</p></div>')+
+    '<div class="legend">'+all.map(sr=>'<button class="legend-btn" data-series="'+esc(sr.name)+
+      '" aria-pressed="'+(!state.hidden.has(sr.name))+'"><span class="swatch" style="background:'+sr.color+
+      '"></span>'+esc(sr.name)+'</button>').join("")+'</div>'+
+    '<div class="scroll" style="margin-top:16px;max-height:none"><table class="records"><tr>'+
+      '<th>Series</th><th>Latest</th><th>Previous</th><th>Change</th><th>Best period</th><th>Worst period</th></tr>'+
+      '<tbody>'+summary+'</tbody></table></div>'+
+    '</div>';
+}
+
+function matrixHTML(){
+  const m=metricById(state.matrixMetric);
+  const periods=periodsOf();
+  const regs=activeRegions();
+
+  /* region × period */
+  const rVals=[];
+  const rRows=regs.map(r=>{
+    const vals=metricSeries("region",m,null,[r]);
+    vals.forEach(v=>{ if(v!=null) rVals.push(v); });
+    return { name:r, vals:vals };
+  });
+  const rMin=rVals.length?Math.min(...rVals):0, rMax=rVals.length?Math.max(...rVals):1;
+
+  /* segment × period for the chosen cut */
+  const sVals=[];
+  const sRows=SEGMENTS.map(s=>{
+    const vals=metricSeries(state.matrixLane,m,s.prefix);
+    vals.forEach(v=>{ if(v!=null) sVals.push(v); });
+    return { name:s.label, vals:vals };
+  });
+  const sMin=sVals.length?Math.min(...sVals):0, sMax=sVals.length?Math.max(...sVals):1;
+
+  const head=first=>'<tr><th>'+esc(first)+'</th>'+periods.map(p=>'<th>'+esc(p)+'</th>').join("")+'</tr>';
+  const body=(rows,min,max,clickAttr)=>rows.map(row=>
+    '<tr'+(clickAttr?' class="clickable" data-drill="'+esc(row.name)+'" aria-selected="'+(state.drillRegion===row.name)+'"':'')+'>'+
+    '<td style="font-weight:500">'+esc(row.name)+'</td>'+
+    row.vals.map(v=>'<td><span class="heat num" style="'+heatStyle(m,v,min,max)+'">'+fmt(m,v)+'</span></td>').join("")+
+    '</tr>').join("");
+
+  return '<div class="sec"><h2>Drill down</h2><span class="note">Oldest period on the left. Colour runs red (worst) to green (best) within each grid.</span></div>'+
+  '<div class="panel" style="margin-bottom:18px"><div class="panel-hd"><h3>Pick a metric to break apart</h3>'+
+    '<div class="seg">'+metricsOf().map(x=>'<button data-mm="'+x.id+'" aria-pressed="'+(x.id===state.matrixMetric)+'">'+esc(x.label)+'</button>').join("")+'</div>'+
+  '</div>'+
+  '<div class="grid2">'+
+    '<div><div class="panel-hd"><h3>By region</h3><span class="note">Click a row for its segment detail</span></div>'+
+      '<div class="scroll"><table class="matrix">'+head("Region")+'<tbody>'+(rRows.length?body(rRows,rMin,rMax,true):'<tr><td colspan="'+(periods.length+1)+'" style="text-align:center;color:var(--muted);padding:24px">No regions selected</td></tr>')+'</tbody></table></div></div>'+
+    '<div><div class="panel-hd"><h3>By segment</h3>'+
+      '<div class="rec-tabs">'+lanesOf().map(l=>'<button data-ml="'+l.id+'" aria-pressed="'+(l.id===state.matrixLane)+'">'+esc(l.label)+'</button>').join("")+'</div></div>'+
+      '<div class="scroll"><table class="matrix">'+head("Segment")+'<tbody>'+body(sRows,sMin,sMax,false)+'</tbody></table></div></div>'+
+  '</div>'+
+  drillHTML()+
+  '</div>';
+}
+
+function drillHTML(){
+  if(!state.drillRegion) return "";
+  const periods=periodsOf();
+  const rows=rowsFor("region").filter(r=>r.region===state.drillRegion);
+  const byPeriod=new Map(rows.map(r=>[r.period,r]));
+  let html='<div style="margin-top:18px;border-top:1px solid var(--hair-strong);padding-top:16px">'+
+    '<div class="panel-hd"><h3>'+esc(state.drillRegion)+' \u2014 every metric, every segment</h3>'+
+    '<button class="linky" id="drillClose">Close</button></div>'+
+    '<div class="scroll"><table class="records"><tr><th>Segment</th><th>Metric</th>'+periods.map(p=>'<th>'+esc(p)+'</th>').join("")+'</tr><tbody>';
+  SEGMENTS.forEach(s=>{
+    metricsOf().forEach((m,mi)=>{
+      html+='<tr>'+(mi===0?'<td rowspan="'+metricsOf().length+'" style="font-weight:600;vertical-align:top">'+esc(s.label)+'</td>':'')+
+        '<td style="color:var(--ink-2)">'+esc(m.label)+'</td>'+
+        periods.map(p=>{
+          let v;
+          if(m.src==="bq"){
+            const i=periods.indexOf(p);
+            v=metricSeries("region",m,s.prefix,[state.drillRegion])[i];
+          } else { const r=byPeriod.get(p); v=r?valueAt(r,m,s.prefix):null; }
+          return '<td class="num">'+fmt(m,v)+'</td>';
+        }).join("")+'</tr>';
+    });
+  });
+  return html+'</tbody></table></div></div>';
+}
+
+function recordFields(laneId){
+  const rows=raw(laneId);
+  const keys=new Set();
+  rows.forEach(r=>Object.keys(r.v).forEach(k=>keys.add(k)));
+  return [...keys];
+}
+function recordRows(){
+  const laneId=state.recordsLane;
+  const dim=(laneById(laneId)||{}).dim;
+  let rows=laneSetRows(laneId, raw(laneId)).filter(r=>r.granularity===state.granularity);
+  if(dim==="region") rows=rows.filter(r=>activeRegions().includes(r.region));
+  const q=state.recordsQuery.trim().toLowerCase();
+  if(q) rows=rows.filter(r=>(r.period+" "+(r.region||"")).toLowerCase().includes(q));
+  rows.sort((a,b)=>{
+    if(state.sortCol){
+      const av=a.v[state.sortCol], bv=b.v[state.sortCol];
+      if(av==null) return 1; if(bv==null) return -1;
+      return (av-bv)*state.sortDir;
+    }
+    return -comparePeriods(a,b);
+  });
+  return rows;
+}
+function recordsHTML(){
+  const laneId=state.recordsLane;
+  const dim=(laneById(laneId)||{}).dim;
+  const fields=recordFields(laneId);
+  const rows=recordRows();
+  const head='<tr><th>Period</th><th>Date</th>'+(dim?'<th>Region</th>':'')+
+    fields.map(f=>'<th class="clickable" data-sort="'+esc(f)+'" style="cursor:pointer">'+esc(f)+
+      (state.sortCol===f?(state.sortDir<0?" \u2193":" \u2191"):"")+'</th>').join("")+'</tr>';
+  const body=rows.map(r=>'<tr><td style="font-weight:500">'+esc(r.period)+'</td>'+
+    '<td class="num" style="color:var(--muted)">'+(r.date?r.date.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"2-digit"}):"\u2014")+'</td>'+
+    (dim?'<td>'+esc(r.region||"")+'</td>':'')+
+    fields.map(f=>{
+      const v=r.v[f];
+      return '<td class="num">'+(v==null||isNaN(v)?"\u2014":(Math.abs(v)>=100?Math.round(v).toLocaleString("en-IN"):v.toFixed(2)))+'</td>';
+    }).join("")+'</tr>').join("");
+
+  return '<div class="sec"><h2>Records<span class="admin-tag">Admin</span></h2><span class="note">'+rows.length+' row'+(rows.length===1?"":"s")+
+    ' from '+esc((laneById(laneId)||{}).sheet||"")+' \u00b7 sorted newest first unless you pick a column</span></div>'+
+  '<div class="panel"><div class="panel-hd">'+
+    '<div class="rec-tabs">'+lanesOf().map(l=>'<button data-rl="'+l.id+'" aria-pressed="'+(l.id===state.recordsLane)+'">'+esc(l.label)+'</button>').join("")+'</div>'+
+    '<div class="ctl"><input class="search" id="recSearch" placeholder="Filter periods or regions" value="'+esc(state.recordsQuery)+'">'+
+    '<button class="btn" id="csvBtn" style="background:var(--panel);border-color:var(--hair-strong);color:var(--ink-2)">Download CSV</button></div>'+
+  '</div>'+
+  '<div class="scroll"><table class="records">'+head+'<tbody>'+
+    (rows.length?body:'<tr><td colspan="'+(fields.length+3)+'" style="text-align:center;color:var(--muted);padding:28px">Nothing matches that filter. Clear the search or pick more regions.</td></tr>')+
+  '</tbody></table></div></div>';
+}
+
+/* ADMIN ONLY - what the sheets actually delivered, for spotting gaps at source. */
+function healthHTML(){
+  const ms=metricsOf(), cols=ms.filter(m=>m.agg!=="ratio").map(m=>m.id);
+  const rows=lanesOf().map(l=>{
+    const all=raw(l.id);
+    let cells=0, blanks=0;
+    all.forEach(r=>SEGMENTS.forEach(sg=>cols.forEach(c=>{
+      cells++; const v=r.v[sg.prefix+c]; if(v==null||isNaN(v)) blanks++;
+    })));
+    const dy=all.filter(r=>r.granularity==="day").length;
+    const wk=all.filter(r=>r.granularity==="week").length;
+    const mo=all.filter(r=>r.granularity==="month").length;
+    const regs=l.dim==="region" ? new Set(all.map(r=>r.region)).size : "\u2014";
+    return '<tr><td style="font-weight:500">'+esc(l.label)+'</td>'+
+      '<td style="text-align:left;color:var(--muted)">'+esc(laneSheet(l))+'</td>'+
+      '<td class="num">'+all.length+'</td><td class="num">'+dy+'</td><td class="num">'+wk+'</td><td class="num">'+mo+'</td>'+
+      '<td class="num">'+regs+'</td>'+
+      '<td class="num"'+(blanks?' style="color:var(--down);font-weight:600"':'')+'>'+
+        blanks+(cells?' <span style="color:var(--muted);font-weight:400">of '+cells+'</span>':'')+'</td></tr>';
+  }).join("");
+  const acc = state.access
+    ? state.access.length+' people in '+ACCESS_FILE+' \u00b7 '+
+      state.access.filter(a=>a.role==="admin").length+' admin'
+    : 'No '+ACCESS_FILE+' found \u2014 any '+ALLOWED_DOMAINS.join(" / ")+' address can sign in';
+  let costDims="";
+  if(state.cost){
+    const seen={};
+    state.cost.forEach(function(r){
+      const k="seg:"+r.segment; seen[k]=seen[k]||{v:r.segment,kind:"segment",to:costSegmentOf(r.segment)};
+      const g="reg:"+r.region;  seen[g]=seen[g]||{v:r.region,kind:"region",
+        to:(allRegions().indexOf(r.region)>=0?r.region:null)};
+    });
+    const rows=Object.keys(seen).map(k=>seen[k]).map(function(d){
+      return '<tr><td style="text-align:left">'+esc(d.kind)+'</td>'+
+        '<td style="text-align:left">'+esc(d.v==null?"(blank)":d.v)+'</td>'+
+        '<td style="text-align:left'+(d.to?'':';color:var(--down);font-weight:600')+'">'+
+        (d.to?esc(d.to):"not mapped \u2014 excluded from that filter")+'</td></tr>';
+    }).join("");
+    /* Which periods the cost query actually covers, before any filter is
+       applied - so a gap on a card can be traced to missing rows vs a filter. */
+    const cover={};
+    state.cost.forEach(function(r){
+      if(!costProductMatch(r.product)) return;
+      const k=r.period_type+"|"+r.period;
+      const c=cover[k]||(cover[k]={pt:r.period_type,p:r.period,rows:0,images:0,cost:0,segs:{}});
+      c.rows++; c.images+=Number(r.images)||0; c.cost+=Number(r.cost)||0;
+      const sg=costSegmentOf(r.segment)||"unmapped";
+      c.segs[sg]=(c.segs[sg]||0)+1;
+    });
+    const onScreen=periodsOf();
+    const covRows=Object.keys(cover).map(k=>cover[k])
+      .filter(c=>c.pt===state.granularity && isShownPeriod(c.p))
+      .sort((a,b)=>onScreen.indexOf(a.p)-onScreen.indexOf(b.p))
+      .map(function(c){
+        const missing=onScreen.indexOf(c.p)<0;
+        return '<tr><td style="text-align:left">'+esc(c.p)+(missing?' <span style="color:var(--muted)">(not on screen)</span>':'')+
+          '</td><td class="num">'+c.rows+'</td><td class="num">'+c.images.toLocaleString("en-IN")+
+          '</td><td class="num">'+fmt({kind:"inr"},c.cost)+'</td>'+
+          '<td style="text-align:left;color:var(--muted)">'+esc(Object.keys(c.segs).sort().join(", "))+'</td></tr>';
+      }).join("");
+    const absent=onScreen.filter(p=>!cover[state.granularity+"|"+p]);
+    costDims='<div class="sec"><h2>Cost coverage<span class="admin-tag">Admin</span></h2>'+
+      '<span class="note">'+esc(state.product)+' \u00b7 '+esc(state.granularity==="day"?"daily":state.granularity+"ly")+', before segment and region filters'+
+      (absent.length?' \u00b7 nothing returned for '+esc(absent.join(", ")):'')+'</span></div>'+
+      '<div class="panel" style="margin-bottom:18px"><div class="scroll"><table class="records">'+
+      '<tr><th style="text-align:left">Period</th><th>Rows</th><th>Images</th><th>Cost</th>'+
+      '<th style="text-align:left">Segments present</th></tr><tbody>'+
+      (covRows||'<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:22px">No cost rows for this product</td></tr>')+
+      '</tbody></table></div></div>'+
+      '<div class="sec"><h2>Cost dimensions<span class="admin-tag">Admin</span></h2>'+
+      '<span class="note">What BigQuery returned, and how each value maps onto the filters. '+
+      'Anything unmapped goes in segmentMap in config.json.</span></div>'+
+      '<div class="panel"><div class="scroll"><table class="records">'+
+      '<tr><th style="text-align:left">Field</th><th style="text-align:left">Value from BigQuery</th>'+
+      '<th style="text-align:left">Maps to</th></tr><tbody>'+rows+'</tbody></table></div></div>';
+  }
+  return costDims+'<div class="sec"><h2>Data health<span class="admin-tag">Admin</span></h2>'+
+    '<span class="note">What each sheet returned on the last sync. Blanks are missing metric cells, not zeros.</span></div>'+
+    '<div class="panel" style="margin-bottom:18px"><div class="panel-hd" style="margin:0">'+
+      '<h3>Access</h3><span class="note">'+esc(acc)+'</span></div></div>'+
+    '<div class="panel"><div class="scroll" style="max-height:none"><table class="records">'+
+    '<tr><th>Cut</th><th style="text-align:left">Sheet</th><th>Rows</th><th>Daily</th><th>Weekly</th><th>Monthly</th><th>Regions</th><th>Blank cells</th></tr>'+
+    '<tbody>'+rows+'</tbody></table></div></div>';
+}
+
+/* ADMIN ONLY - who signed in and when. */
+function loginLogHTML(){
+  if(!LOGIN_LOG){
+    return '<div class="sec"><h2>Sign-in log<span class="admin-tag">Admin</span></h2></div>'+
+      '<div class="panel"><p style="margin:0;font-size:13px;color:var(--muted)">'+
+      'Not set up yet \u2014 add a <code>loginLog</code> block to '+CONFIG_FILE+' pointing at a Google Form.'+
+      '</p></div>';
+  }
+  const rows=state.loginLog;
+  if(!rows) return '<div class="sec"><h2>Sign-in log<span class="admin-tag">Admin</span></h2></div>'+
+    '<div class="panel"><p style="margin:0;font-size:13px;color:var(--muted)">'+
+    'Couldn\u2019t read \u201c'+esc(LOGIN_LOG.sheetName||"")+'\u201d. Check the tab name and that the workbook is link-readable.</p></div>';
+
+  const cut=Date.now()-7*864e5;
+  const recent=rows.filter(r=>r.at && r.at.getTime()>=cut);
+  const people=new Set(recent.map(r=>r.email));
+  const body=rows.slice(0,60).map(r=>
+    '<tr><td class="num" style="text-align:left">'+
+      (r.at ? esc(r.at.toLocaleString("en-IN",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})) : "\u2014")+
+    '</td><td style="text-align:left">'+esc(r.email)+'</td>'+
+    '<td style="text-align:left;color:var(--muted)">'+esc(r.role||"\u2014")+'</td></tr>').join("");
+
+  return '<div class="sec"><h2>Sign-in log<span class="admin-tag">Admin</span></h2>'+
+    '<span class="note">'+recent.length+' sign-in'+(recent.length===1?"":"s")+' from '+people.size+
+    ' '+(people.size===1?"person":"people")+' in the last 7 days \u00b7 showing the most recent '+
+    Math.min(60,rows.length)+' of '+rows.length+'</span></div>'+
+    '<div class="panel"><div class="scroll"><table class="records">'+
+    '<tr><th style="text-align:left">When</th><th style="text-align:left">Account</th><th style="text-align:left">Role</th></tr>'+
+    '<tbody>'+(body||'<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:24px">No sign-ins recorded yet</td></tr>')+
+    '</tbody></table></div></div>';
+}
+
+function footHTML(){
+  return '<div class="foot">'+
+    '<span>Source: <a href="'+SHEET_URL+'" target="_blank" rel="noopener">Delivery Metrics workbook</a> \u2014 '+
+      esc(lanesOf().map(laneSheet).join(", "))+'</span>'+
+    '<span>Percentages are 0\u2013100. TAT is in hours.</span>'+
+    '<span>Cost / revenue isn\u2019t in these sheets yet.</span></div>';
+}
+
+/* ---------- events ---------- */
+function wire(){
+  const bqb=document.getElementById("bqBtn");
+  if(bqb) bqb.onclick=async()=>{
+    bqb.textContent="Connecting\u2026"; bqb.disabled=true;
+    try{ BQ.token=await bqToken(true); state.costError=null; }
+    catch(e){ state.costError="Sign-in for BigQuery didn\u2019t complete."; }
+    state.cost=await loadCost();
+    render();
+  };
+  document.querySelectorAll("[data-chart]").forEach(b=>b.onclick=()=>{ state.chart=b.dataset.chart; render(); });
+  document.querySelectorAll("[data-scale]").forEach(b=>b.onclick=()=>{ state.scale=b.dataset.scale; render(); });
+  document.querySelectorAll("[data-card]").forEach(b=>b.onclick=()=>{
+    const id=b.dataset.card;
+    if(state.hiddenCards.has(id)) state.hiddenCards.delete(id); else state.hiddenCards.add(id);
+    render();
+  });
+  document.querySelectorAll("[data-gran]").forEach(b=>b.onclick=()=>{ state.granularity=b.dataset.gran; render(); });
+  document.querySelectorAll("[data-seg]").forEach(b=>b.onclick=()=>{ state.segment=b.dataset.seg; render(); });
+  document.querySelectorAll("[data-pp]").forEach(b=>b.onclick=()=>{ state.pipePeriod=b.dataset.pp; render(); });
+  /* 360 Validation Failed mode: switch to the other set of lane sheets, loading them the first time. */
+  document.querySelectorAll("[data-vf]").forEach(b=>b.onclick=()=>{
+    state.includeVF = b.dataset.vf==="1";
+    if(lanesOf().every(l=>state.data[key(l.id)])){ render(); ensureByRegion().then(loaded=>{ if(loaded) render(); }); }
+    else loadAll();
+  });
+  document.querySelectorAll("[data-region]").forEach(b=>b.onclick=()=>{
+    const r=b.dataset.region;
+    if(regSet().has(r)) regSet().delete(r); else regSet().add(r);
+    if(state.drillRegion&&!regSet().has(state.drillRegion)) state.drillRegion=null;
+    render();
+    ensureByRegion().then(loaded=>{ if(loaded) render(); });
+  });
+  const ra=document.getElementById("regAll");
+  if(ra) ra.onclick=()=>{
+    const all=allRegions();
+    if(regSet().size===all.length) regSet().clear(); else all.forEach(r=>regSet().add(r));
+    render();
+    ensureByRegion().then(loaded=>{ if(loaded) render(); });
+  };
+  document.querySelectorAll("[data-tm]").forEach(b=>b.onclick=()=>{ state.trendMetric=b.dataset.tm; render(); });
+  document.querySelectorAll("[data-split]").forEach(b=>b.onclick=()=>{ state.trendSplit=b.dataset.split; state.hidden.clear(); render(); });
+  document.querySelectorAll("[data-cmode]").forEach(b=>b.onclick=()=>{ state.colorMode=b.dataset.cmode; render(); });
+  document.querySelectorAll("[data-series]").forEach(b=>b.onclick=()=>{
+    const n=b.dataset.series;
+    if(state.hidden.has(n)) state.hidden.delete(n); else state.hidden.add(n);
+    render();
+  });
+  document.querySelectorAll("[data-mm]").forEach(b=>b.onclick=()=>{ state.matrixMetric=b.dataset.mm; render(); });
+  document.querySelectorAll("[data-ml]").forEach(b=>b.onclick=()=>{ state.matrixLane=b.dataset.ml; render(); });
+  document.querySelectorAll("[data-rl]").forEach(b=>b.onclick=()=>{ state.recordsLane=b.dataset.rl; state.sortCol=null; render(); });
+  document.querySelectorAll("[data-drill]").forEach(tr=>tr.onclick=()=>{
+    state.drillRegion = state.drillRegion===tr.dataset.drill ? null : tr.dataset.drill; render();
+  });
+  const dc=document.getElementById("drillClose");
+  if(dc) dc.onclick=(e)=>{ e.stopPropagation(); state.drillRegion=null; render(); };
+  document.querySelectorAll("[data-sort]").forEach(th=>th.onclick=()=>{
+    const f=th.dataset.sort;
+    if(state.sortCol===f) state.sortDir*=-1; else { state.sortCol=f; state.sortDir=-1; }
+    render();
+  });
+  const rs=document.getElementById("recSearch");
+  if(rs) rs.oninput=()=>{
+    state.recordsQuery=rs.value;
+    const at=rs.selectionStart; render();
+    const el=document.getElementById("recSearch");
+    if(el){ el.focus(); el.setSelectionRange(at,at); }
+  };
+  const csv=document.getElementById("csvBtn");
+  if(csv) csv.onclick=downloadCSV;
+
+  /* chart tooltips */
+  const tip=document.getElementById("tip");
+  document.querySelectorAll(".pt").forEach(c=>{
+    c.addEventListener("mouseenter",e=>{
+      tip.innerHTML = c.dataset.tip ? c.dataset.tip
+        : ("<b>"+c.dataset.v+"</b> \u00b7 "+c.dataset.label+"<br>"+c.dataset.x);
+      tip.style.opacity="1";
+    });
+    c.addEventListener("mousemove",e=>{
+      tip.style.left=(e.clientX+14)+"px"; tip.style.top=(e.clientY-46)+"px";
+    });
+    c.addEventListener("mouseleave",()=>{ tip.style.opacity="0"; });
+  });
+}
+
+function downloadCSV(){
+  const laneId=state.recordsLane, dim=(laneById(laneId)||{}).dim;
+  const fields=recordFields(laneId), rows=recordRows();
+  const head=["period","date"].concat(dim?["region"]:[]).concat(fields);
+  const lines=[head.join(",")].concat(rows.map(r=>{
+    const base=[r.period, r.date?r.date.toISOString().slice(0,10):""].concat(dim?[r.region||""]:[]);
+    return base.concat(fields.map(f=>r.v[f]==null?"":r.v[f])).map(c=>{
+      const s=String(c);
+      return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+    }).join(",");
+  }));
+  const blob=new Blob([lines.join("\n")],{type:"text/csv;charset=utf-8;"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=laneId+"_"+state.granularity+"_"+new Date().toISOString().slice(0,10)+".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+document.getElementById("refreshBtn").onclick=loadAll;
+/* The masthead condenses once you scroll so the frozen bar stays slim. */
+/* Collapsing the header shortens the page, which can scroll you back above the
+   trigger and expand it again - hence the gap between the two thresholds. */
+let mastCompact=false, stickyQueued=false;
+window.addEventListener("scroll",function(){
+  const y=window.scrollY;
+  if(!mastCompact && y>90) mastCompact=true;
+  else if(mastCompact && y<30) mastCompact=false;
+  else return;
+  const m=document.querySelector(".mast");
+  if(!m) return;
+  m.classList.toggle("compact",mastCompact);
+  if(!stickyQueued){
+    stickyQueued=true;
+    requestAnimationFrame(function(){ stickyQueued=false; syncSticky(); });
+  }
+},{passive:true});
+window.addEventListener("resize",syncSticky);
+syncSticky();
+loadConfig().then(function(){ if(restoreSession()) showApp(); else showGate(); });
+</script>
+</body>
+</html>
