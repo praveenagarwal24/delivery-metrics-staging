@@ -95,7 +95,7 @@ select.inp{background:var(--panel);border:1px solid var(--hair-strong);border-ra
 .card .spark{margin-top:auto}
 .card-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .card-top .name{font-size:13px;font-weight:600;color:var(--ink-2)}
-.val{font-size:23px;font-weight:600;letter-spacing:-.02em}
+.val{font-size:17.25px;font-weight:600;letter-spacing:-.02em}
 .delta{font-size:11.5px;font-weight:600;padding:2px 7px;border-radius:var(--r-pill);white-space:nowrap}
 .delta.up{background:#E4F1E9;color:var(--up)}
 .delta.down{background:#FBE7E5;color:var(--down)}
@@ -1532,7 +1532,7 @@ function regionColor(r){
 /* One size and style for every value label on the cards, and one for the period
    axis - so VIN, Rooftop and Region read identically. Values are drawn vertical
    (rotate -90) above the bar so adjacent numbers never crowd each other. */
-const BAR_LABEL_FS=10, AXIS_LABEL_FS=10;
+const BAR_LABEL_FS=7.5, AXIS_LABEL_FS=10;
 function barLabel(cx, topY, text, color, fs){
   return '<text transform="translate('+(+cx).toFixed(1)+','+(+topY-4).toFixed(1)+') rotate(-90)" '+
     'text-anchor="start" font-size="'+(fs||BAR_LABEL_FS)+'" font-weight="600" fill="'+color+'">'+text+'</text>';
