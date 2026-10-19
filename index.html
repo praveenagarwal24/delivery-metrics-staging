@@ -1525,11 +1525,21 @@ function regionColor(r){
 /* One line per region on the region card, coloured to match the chips. */
 /* Percentage as a line against the left axis, counts as bars against the
    right. Two scales in one card, so both axes are labelled. */
+/* One size and style for every value label on the cards, and one for the period
+   axis - so VIN, Rooftop and Region read identically. Values are drawn vertical
+   (rotate -90) above the bar so adjacent numbers never crowd each other. */
+const BAR_LABEL_FS=10, AXIS_LABEL_FS=10;
+function barLabel(cx, topY, text, color, fs){
+  return '<text transform="translate('+(+cx).toFixed(1)+','+(+topY-4).toFixed(1)+') rotate(-90)" '+
+    'text-anchor="start" font-size="'+(fs||BAR_LABEL_FS)+'" font-weight="600" fill="'+color+'">'+text+'</text>';
+}
 function sparkCombo(pctSeries, metric, labels, num, den){
   const pv=pctSeries.filter(v=>v!=null);
   const cv=den.concat(num).filter(v=>v!=null);
   if(!pv.length || !cv.length) return sparkline(pctSeries, metric, labels);
-  const W=268,H=140,padT=24,padB=20,padL=26,padR=32;
+  const W=268,H=140,padB=20,padL=26,padR=32;
+  const _lp=Math.max.apply(null, pv.map(v=>fmt(metric,v).length));
+  const padT=Math.max(24, 8+_lp*BAR_LABEL_FS*0.6);
   const base=H-padB, n=labels.length, inner=W-padL-padR;
   const pr=niceRange(metric, Math.min.apply(null,pv), Math.max.apply(null,pv));
   const pspan=(pr.hi-pr.lo)||1;
@@ -1588,11 +1598,10 @@ function sparkCombo(pctSeries, metric, labels, num, den){
     const c=toneColor(k===0?stepTone(metric,pts[1]?p[3]:null,pts[1]?pts[1][3]:null):stepTone(metric,pts[k-1][3],p[3]));
     svg+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="'+(k===pts.length-1?3.2:2.2)+
          '" fill="'+(k===pts.length-1?c:"var(--panel)")+'" stroke="'+c+'" stroke-width="1.6"/>';
-    svg+='<text x="'+p[0].toFixed(1)+'" y="'+Math.max(9,p[1]-6).toFixed(1)+'" text-anchor="middle" '+
-         'font-size="8.5" font-weight="700" fill="'+c+'">'+fmt(metric,p[3])+'</text>';
+    svg+=barLabel(p[0], p[1], fmt(metric,p[3]), c);
   });
   labels.forEach((lab,i)=>{
-    svg+='<text x="'+x(i).toFixed(1)+'" y="'+(H-5)+'" text-anchor="middle" font-size="9" fill="var(--muted)">'+esc(lab)+'</text>';
+    svg+='<text x="'+x(i).toFixed(1)+'" y="'+(H-5)+'" text-anchor="middle" font-size="'+AXIS_LABEL_FS+'" fill="var(--muted)">'+esc(lab)+'</text>';
   });
   return svg+'</svg>';
 }
@@ -1613,7 +1622,9 @@ function sparkMulti(seriesList, metric, labels){
        group on x(0) hangs half of it off the left edge. */
     const slot=((W-padL-padR)/n) * 0.8;
     const bw=Math.max(1.3, slot/m);
-    const fs=Math.max(4.8, Math.min(6.4, bw*0.95));
+    /* Standard label size when bars are wide (one region on screen); shrinks only
+       when several regions share a period and the bars get narrow. */
+    const fs=Math.max(6, Math.min(BAR_LABEL_FS, bw*1.3));
     /* Labels always sit above their bar, so the plot has to start low enough
        that even a full-height bar leaves room for one. */
     const longest=Math.max.apply(null, all.map(v=>fmt(metric,v).length));
@@ -1645,13 +1656,11 @@ function sparkMulti(seriesList, metric, labels){
              Math.max(0.9,bar.bw-0.9).toFixed(1)+'" height="'+h.toFixed(1)+
              '" rx="1" fill="'+c+'" opacity=".9" data-label="'+esc(sr.name)+'" data-x="'+
              esc(labels[i]||"")+'" data-v="'+esc(fmt(metric,v))+'"'+regionTip(metric, sr, labels, i, v)+'></rect>';
-        svg+='<text transform="translate('+cx.toFixed(1)+','+(yy-2.5).toFixed(1)+') rotate(-90)" '+
-             'text-anchor="start" font-size="'+bar.fs.toFixed(1)+'" font-weight="600" fill="'+
-             c+'">'+fmt(metric,v)+'</text>';
+        svg+=barLabel(cx, yy, fmt(metric,v), c, bar.fs);
       });
     });
     labels.forEach((lab,i)=>{
-      svg+='<text x="'+x(i).toFixed(1)+'" y="'+(H-5)+'" text-anchor="middle" font-size="10" fill="var(--muted)">'+esc(lab)+'</text>';
+      svg+='<text x="'+x(i).toFixed(1)+'" y="'+(H-5)+'" text-anchor="middle" font-size="'+AXIS_LABEL_FS+'" fill="var(--muted)">'+esc(lab)+'</text>';
     });
     return svg+'</svg>';
   }
@@ -1675,12 +1684,12 @@ function sparkMulti(seriesList, metric, labels){
       if(ly<9) return;
       if(placed.some(q=>Math.abs(q[0]-p[0])<26 && Math.abs(q[1]-ly)<7)) return;
       placed.push([p[0],ly]);
-      svg+='<text x="'+p[0].toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="middle" font-size="8" '+
+      svg+='<text x="'+p[0].toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="middle" font-size="'+BAR_LABEL_FS+'" '+
            'font-weight="600" fill="'+c+'">'+fmt(metric,p[3])+'</text>';
     });
   });
   labels.forEach((lab,i)=>{
-    svg+='<text x="'+x(i).toFixed(1)+'" y="'+(H-5)+'" text-anchor="middle" font-size="10" fill="var(--muted)">'+esc(lab)+'</text>';
+    svg+='<text x="'+x(i).toFixed(1)+'" y="'+(H-5)+'" text-anchor="middle" font-size="'+AXIS_LABEL_FS+'" fill="var(--muted)">'+esc(lab)+'</text>';
   });
   return svg+'</svg>';
 }
@@ -1724,11 +1733,15 @@ function niceRange(metric, min, max){
 function sparkline(series,metric,labels,counts,unit){
   const idx=[]; series.forEach((v,i)=>{ if(v!=null) idx.push(i); });
   if(idx.length<2) return '<div class="spark" style="height:136px"></div>';
-  const W=268,H=140,padT=22,padB=20,padX=24;
+  const W=268,H=140,padB=20,padX=24;
+  const bars=state.chart==="bar";
   const vals=idx.map(i=>series[i]);
   /* Percentages get at least 2pp of visible range, other metrics at least 8%
      of their own level. Without a floor, a 0.1pp wobble fills the whole card
      and reads as a collapse. A dead-flat series lands mid-height. */
+  /* Vertical bar labels sit above the bar, so leave headroom for the longest one. */
+  const _lp=Math.max.apply(null, vals.map(v=>fmt(metric,v).length));
+  const padT = bars ? Math.min(H*0.5, 10+_lp*BAR_LABEL_FS*0.6) : 22;
   const n=series.length, base=H-padB;
   const sc=makeScale(metric, vals, padT, base);
   const x=i=> n>1 ? padX+i*(W-padX*2)/(n-1) : W/2;
@@ -1738,7 +1751,6 @@ function sparkline(series,metric,labels,counts,unit){
   let svg='<svg class="spark" viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block" role="img" aria-label="'+
     esc(metric.label)+' trend">';
   svg+='<line x1="0" y1="'+base+'" x2="'+W+'" y2="'+base+'" stroke="var(--hair-strong)" stroke-width="1"/>';
-  const bars=state.chart==="bar";
   if(bars){
     const bw=Math.min(26, (n>1 ? (W-padX*2)/(n-1) : W*0.4) * 0.5);
     pts.forEach(function(p,k){
@@ -1746,9 +1758,7 @@ function sparkline(series,metric,labels,counts,unit){
       const h=Math.max(1, base-p[1]);
       svg+='<rect x="'+(p[0]-bw/2).toFixed(1)+'" y="'+p[1].toFixed(1)+'" width="'+bw.toFixed(1)+
            '" height="'+h.toFixed(1)+'" rx="2" fill="'+c+'" opacity="'+(k===pts.length-1?".95":".55")+'"/>';
-      svg+='<text x="'+p[0].toFixed(1)+'" y="'+Math.max(11,p[1]-6).toFixed(1)+
-           '" text-anchor="middle" font-size="11" font-weight="'+(k===pts.length-1?"700":"600")+
-           '" fill="'+c+'">'+fmt(metric,series[p[2]])+'</text>';
+      svg+=barLabel(p[0], p[1], fmt(metric,series[p[2]]), c);
     });
   } else {
   for(let k=1;k<pts.length;k++){
@@ -1764,7 +1774,7 @@ function sparkline(series,metric,labels,counts,unit){
     svg+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="'+(isLast?3.6:2.3)+
          '" fill="'+(isLast?c:"var(--panel)")+'" stroke="'+c+'" stroke-width="1.8"/>';
     svg+='<text x="'+p[0].toFixed(1)+'" y="'+Math.max(11,p[1]-9).toFixed(1)+
-         '" text-anchor="middle" font-size="11" font-weight="'+(isLast?"700":"600")+
+         '" text-anchor="middle" font-size="'+BAR_LABEL_FS+'" font-weight="'+(isLast?"700":"600")+
          '" fill="'+(k===0?"var(--ink-2)":c)+'">'+fmt(metric,series[p[2]])+'</text>';
   });
   }
@@ -1779,7 +1789,7 @@ function sparkline(series,metric,labels,counts,unit){
     });
   }
   (labels||[]).forEach((lab,i)=>{
-    svg+='<text x="'+x(i).toFixed(1)+'" y="'+(H-5)+'" text-anchor="middle" font-size="10.5" fill="var(--muted)">'+esc(lab)+'</text>';
+    svg+='<text x="'+x(i).toFixed(1)+'" y="'+(H-5)+'" text-anchor="middle" font-size="'+AXIS_LABEL_FS+'" fill="var(--muted)">'+esc(lab)+'</text>';
   });
   return svg+'</svg>';
 }
