@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;450;500;600;700&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="engine-360.js"></script>
 <style>
 :root{
   --canvas:#ECEFEE; --panel:#FFFFFF; --panel-sunk:#F4F6F5;
@@ -77,11 +78,21 @@ select.inp{background:var(--panel);border:1px solid var(--hair-strong);border-ra
 .sec-tools{margin-left:auto;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .chip[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:500}
 .linky{background:none;border:0;color:var(--teal);font-size:12.5px;text-decoration:underline;padding:0}
+/* Source dropdown (360), the same control as the 360 dashboard's Reports tab */
+.msel{position:relative}
+.msel-btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--hair-strong);background:var(--panel);border-radius:7px;padding:5px 10px;font-size:13px;color:var(--ink-2);min-width:150px;justify-content:space-between;cursor:pointer}
+.msel-btn svg{flex:0 0 auto;opacity:.7}
+.msel-pill{font-size:11px;background:var(--panel-sunk);border:1px solid var(--hair-strong);border-radius:999px;padding:0 6px;margin-left:4px;color:var(--muted)}
+.msel-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:60;background:var(--panel);border:1px solid var(--hair-strong);border-radius:10px;box-shadow:0 8px 24px rgba(12,46,44,.16);padding:8px;min-width:210px}
+.msel-acts{display:flex;gap:14px;padding:2px 4px 8px;margin-bottom:4px;border-bottom:1px solid var(--hair-strong)}
+.msel-pop label{display:flex;align-items:center;gap:8px;padding:5px 4px;font-size:13px;color:var(--ink-2);cursor:pointer;border-radius:6px}
+.msel-pop label:hover{background:var(--panel-sunk)}
 
 /* ---------- section headings ---------- */
 .sec{margin:30px 0 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .sec h2{margin:0;font-size:15px;font-weight:600;letter-spacing:-.005em}
 .sec .note{font-size:12.5px;color:var(--muted)}
+.sec-sel{height:32px;border:1px solid var(--hair-strong);border-radius:7px;padding:0 8px;font:inherit;font-size:12.5px;background:var(--panel);color:var(--ink)}
 
 /* ---------- glance grid ---------- */
 .lanes{display:grid;grid-template-columns:repeat(var(--lanes,3),minmax(0,1fr));gap:14px 18px;align-items:stretch}
@@ -272,6 +283,7 @@ const SHEET_ID = "16vFElbOV8Awd63R6-WlsNdAScWNE18xGUPFkzE0GN7c";
    re-pasting anything. If config.json is missing, the values below are used.
    NOTE: this gates the UI. It is not a security boundary - the file is public
    and the sheets stay link-readable. Don't treat it as access control.        */
+const STAGING          = false;
 const CONFIG_FILE      = "config.json";
 let   GOOGLE_CLIENT_ID = "";
 let   ALLOWED_DOMAINS  = ["spyne.ai","spyne.co.in"];
@@ -299,6 +311,9 @@ let   ACCESS_CONTACT   = "praveen@spyne.ai";       // where access requests are 
      }
    Leave it out and the logging simply doesn't run.                            */
 let   LOGIN_LOG        = null;
+/* 360 from the 360 Tracker dashboard's raw data (see the 360 product below). Set "raw360": false
+   in config.json to put the 360 tab back on the Google Sheet tabs without touching this file. */
+let   RAW360           = true;
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/edit";
 
 /* agg says how a metric combines across regions: "mean" for rates (the default),
@@ -309,14 +324,15 @@ const SHEET_URL = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/edit"
    population, bad the part that missed. A sheet without them shows the value only. */
 function mkMetrics(lastId,lastLabel,costLabel,slaHrs,combo){
   const h=slaHrs||6;
-  /* total = the fulfilment total; SKUs in it but not in the SLA total were received under 6h ago and not yet judged (MTD only). */
-  const slaTip={ n:"sla_checked", bad:"sla_breached", total:(combo&&combo.pendingNote)?combo.den:null, nLabel:"Total", goodLabel:"Within SLA", badLabel:"SLA breach" };
+  /* SLA counts delivered units only, the same ones as TAT, so both tooltips share one total. */
+  const slaTip={ n:"sla_checked", bad:"sla_breached", nLabel:"Delivered", goodLabel:"Within SLA", badLabel:"SLA breach" };
   const tatTip={ n:"tat_measured", bad:"tat_over_sla", nLabel:"Measured", goodLabel:"Within "+h+"h", badLabel:"Over "+h+"h" };
+  /* Fulfilment leads: it covers every unit received; SLA and TAT then describe the delivered ones. */
   return [
+    { id:lastId,        label:lastLabel,   kind:"pct", better:"high", combo:combo||null },
     { id:"sla_pct",     label:"SLA < "+h+" hrs", kind:"pct", better:"high", tip:slaTip },
     { id:"p99_tat_hrs", label:"TAT (P99)", kind:"hrs", better:"low", tip:tatTip },
     { id:"p95_tat_hrs", label:"TAT (P95)", kind:"hrs", better:"low", tip:tatTip },
-    { id:lastId,        label:lastLabel,   kind:"pct", better:"high", combo:combo||null },
     /* Cost per unit only. Total cost and volume are still queried - the ratio
        needs both - but neither is offered as a card or chart of its own. */
     { id:"cost_per_image", label:costLabel||"Cost / image", kind:"inr2", better:"low", agg:"ratio", src:"bq" }
@@ -326,8 +342,7 @@ function mkMetrics(lastId,lastLabel,costLabel,slaHrs,combo){
 const PRODUCTS = [
   { id:"images", label:"Images", status:"live",
     metrics:mkMetrics("fulfillment_pct","Fulfilment","Cost / image",6,
-      /* pendingNote: SLA total = this total minus SKUs received <6h ago (cards 12998/13000), so the MTD gap can be explained */
-      { num:"total_out", den:"total_in", numLabel:"Delivered", denLabel:"Total", pendingNote:true }),
+      { num:"total_out", den:"total_in", numLabel:"Delivered", denLabel:"Total" }),
     quality:{ sheet:"image_qs", title:"Quality Chart" },
     incidents:{ sheet:"Image_ff", title:"What affected delivery" },
     /* Stage-by-stage TAT, last 4 complete weeks (card 13272 -> images_pipeline): one row per
@@ -339,30 +354,39 @@ const PRODUCTS = [
       { id:"rt",     label:"Rooftop", sheet:"images_rt",     color:"var(--s2)", blurb:"Rolled up per dealership", tipUnit:"rooftops" },
       { id:"region", label:"Region",  sheet:"images_region", color:"var(--s3)", blurb:"Split by delivery region", dim:"region" }
     ]},
-  /* vfToggle: each lane sheet has a <sheet>_vf twin that includes Validation Failed spins
-     (360-tracker-dashboard sync-sheets.js). The plain sheets leave them out and are the default. */
-  { id:"spin", label:"360", status:"live", vfToggle:true,
+  /* 360 is computed in the browser from the 360 Tracker dashboard's own data (/data/<YYYY-MM>.json)
+     with engine-360.js, a copy of that dashboard's Reports-tab calculation, so every filter works on
+     the raw spins (Period incl. Daily, Segment, Regions, Input Type, Source) and the numbers match the
+     Reports tab. The data is served only to emails on the 360 dashboard's allow-list (Google sign-in
+     token, checked by its middleware). With "raw360": false in config.json the tab reads the sheets
+     named below instead (the <sheet>_vf twins, Validation Failed included) — the revert path.
+     Quality Chart and incidents always come from the sheet. Images and Video never use raw data. */
+  { id:"spin", label:"360", status:"live", raw:{ base:"https://360-tracker-dashboard.vercel.app" },
     metrics:mkMetrics("delivery_pct","Fulfilment","Cost / spin",6,
       { num:"total_delivered", den:"total_vin", numLabel:"Delivered", denLabel:"Total" }),
     quality:{ sheet:"360_qs", title:"Quality Chart" },
     incidents:{ sheet:"360_ff", title:"What affected delivery" },
-    /* All three read 360_issue and split on its category column. */
+    /* Raw: computed from the spins for the latest period, following every filter.
+       Sheet (revert): 360_issue, split on its category column. */
     panels:[
-      { sheet:"360_issue", cat:"QC Failed", title:"QC Failed reasons",
+      { sheet:"360_issue", raw:true, cat:"QC Failed", title:"QC Failed reasons",
         subtitle:"Blocker severity issues", tone:"red", kind:"reasons", pctWhole:true },
-      { sheet:"360_issue", cat:"Validation Failed", title:"Validation Failed reasons",
+      { sheet:"360_issue", raw:true, cat:"Validation Failed", title:"Validation Failed reasons",
         subtitle:"Failure reasons", tone:"red", kind:"reasons", pctWhole:true },
-      { sheet:"360_issue", cat:"Tech & AI Failure", title:"Tech & AI Failure reasons",
-        subtitle:"Failure reasons", tone:"amber", kind:"reasons", pctWhole:true }
+      { sheet:"360_issue", raw:true, cat:"Tech & AI Failure", title:"Tech & AI Failure reasons",
+        subtitle:"Failure reasons", kind:"reasons", pctWhole:true },   /* red like the other reason cards (tone "amber" pointed at an undefined --warn, so no colour showed) */
+      /* Raw only (no sheet): every other not-delivered status, so the four cards add up to the
+         Fulfilment shortfall. Hidden when "raw360": false. */
+      { raw:true, cat:"Not delivered yet", title:"Not delivered yet",
+        subtitle:"Processing, Under Review, Undelivered", tone:"muted", kind:"reasons", pctWhole:true }
     ],
     lanes:[
-      { id:"spin",   label:"Spin",    sheet:"360_spin",   color:"var(--s1)", blurb:"Every spin delivered" },
-      { id:"rt",     label:"Rooftop", sheet:"360_rt",     color:"var(--s2)", blurb:"Rolled up per dealership" },
-      { id:"region", label:"Region",  sheet:"360_region", color:"var(--s3)", blurb:"Split by delivery region", dim:"region" }
+      { id:"spin",   label:"Spin",    sheet:"360_spin_vf",   color:"var(--s1)", blurb:"Every spin delivered" },
+      { id:"rt",     label:"Rooftop", sheet:"360_rt_vf",     color:"var(--s2)", blurb:"Rolled up per dealership" },
+      { id:"region", label:"Region",  sheet:"360_region_vf", color:"var(--s3)", blurb:"Split by delivery region", dim:"region" }
     ]},
   { id:"video", label:"Video", status:"live", metrics:mkMetrics("fulfillment_pct","Fulfilment","Cost / video",6,
-      /* pendingNote: with video-metrics#2, SLA total = this total minus videos pending QC <6h, so the MTD gap can be explained */
-      { num:"delivered_videos", den:"total_videos", numLabel:"Delivered", denLabel:"Total", pendingNote:true }),
+      { num:"delivered_videos", den:"total_videos", numLabel:"Delivered", denLabel:"Total" }),
     quality:{ sheet:"video_qs", title:"Quality Chart" },
     panels:[
       { sheet:"video_ff",  title:"Fulfilment failure reasons", subtitle:"Failure reasons",
@@ -431,8 +455,55 @@ const state = {
   sortCol:null, sortDir:-1,
   data:{}, loading:false, error:null, synced:null, user:null, access:null, denied:false, loginLog:null,
   cost:null, costError:null, costLatest:null, extras:{}, programs:null, qualities:{},
-  pipes:{}, pipePeriod:"L4W"
+  pipes:{}, pipePeriod:"L4W",
+  rawRows:{}, rawTypes:{}, rawSources:{}, rawSynced:null, srcOpen:false, issuesPeriod:{}
 };
+/* ---------- 360 from raw data (engine-360.js) ---------- */
+function rawOn(prod){ return !!(prod && prod.raw) && RAW360 && !!window.Engine360; }
+function isRaw(){ return rawOn(curProduct()); }
+function rawAll(field){ return Engine360.values(state.rawRows[state.product]||[], field); }
+function rawFilters(){
+  const types=state.rawTypes[state.product], srcs=state.rawSources[state.product];
+  return {
+    types:   (types && types.size<rawAll('type').length) ? types : null,
+    sources: (srcs && srcs.size<rawAll('source').length) ? srcs : null,
+    regions: regionKey() ? new Set(activeRegions()) : null,
+  };
+}
+/* Same wording as the Reports tab when a filter leaves nothing to show. */
+function rawNothingSelected(){
+  const t=state.rawTypes[state.product], s=state.rawSources[state.product];
+  if(t && !t.size) return "No input type selected \u2014 click Images or Video.";
+  if(s && !s.size) return "No source selected \u2014 tick at least one source, or use Select all in the Source dropdown.";
+  return null;
+}
+/* Recompute the three lanes from the raw rows with the current filters. */
+function computeRaw(){
+  const rows=state.rawRows[state.product];
+  if(!rows) return;
+  const out=Engine360.compute(rows, rawFilters());
+  state.data[key("spin")]=out.spin; state.data[key("rt")]=out.rt; state.data[key("region")]=out.region;
+}
+async function loadRaw(prod){
+  const tok=(function(){ try{ return sessionStorage.getItem("dm_cred"); }catch(e){ return null; } })();
+  const opts={ headers:{ "X-Google-Id-Token": tok||"" }, cache:"no-store" };
+  const get=async function(path){
+    const r=await fetch(prod.raw.base+"/data/"+path+"?_="+Date.now(), opts);
+    if(r.status===403) throw new Error("NO_ACCESS");
+    if(r.status===401) throw new Error("SIGN_IN");
+    if(!r.ok) throw new Error("HTTP "+r.status+" reading "+path);
+    return r.json();
+  };
+  const idx=await get("index.json");
+  const months=(idx.months||[]).map(m=>typeof m==="string"?m:(m.key||m.month||m.id)).filter(Boolean);
+  const parts=await Promise.all(months.map(m=>get(m+".json")));
+  const rows=[]; parts.forEach(p=>{ if(p&&p.rows) rows.push.apply(rows,p.rows); });
+  Engine360.prepare(rows);
+  state.rawRows[prod.id]=rows;
+  if(!state.rawTypes[prod.id]) state.rawTypes[prod.id]=new Set(Engine360.values(rows,'type'));
+  if(!state.rawSources[prod.id]) state.rawSources[prod.id]=new Set(Engine360.values(rows,'source'));
+  state.rawSynced=idx.lastSynced?new Date(idx.lastSynced):null;
+}
 function isAdmin(){ return !!(state.user && state.user.admin); }
 /* Sheets are cached per product (and per Validation Failed mode on 360), so 360's
    rooftop rows never overwrite images', and the two 360 modes never mix. */
@@ -450,6 +521,7 @@ function regSet(){
 /* Fire-and-forget: a Google Form accepts a cross-origin POST but answers
    opaquely, so we can't confirm it landed. Never block sign-in on it. */
 function logSignIn(user){
+  if(STAGING) return;   /* test sign-ins stay out of the login log */
   if(!LOGIN_LOG || !LOGIN_LOG.formUrl || !LOGIN_LOG.fields) return;
   try{
     const body=new URLSearchParams();
@@ -477,6 +549,7 @@ async function loadConfig(){
     if(c && typeof c.contact==="string" && c.contact.trim()) ACCESS_CONTACT=c.contact.trim();
     if(c && c.loginLog && c.loginLog.formUrl && c.loginLog.fields) LOGIN_LOG=c.loginLog;
     if(c && c.cost && c.cost.project && c.cost.dataset) COST=c.cost;
+    if(c && c.raw360===false) RAW360=false;
   }catch(e){ /* keep defaults */ }
 }
 function decodeJwt(tok){
@@ -642,7 +715,7 @@ function parseGviz(text){
 }
 /* Products whose lane sheets carry day rows. 360 has none yet. */
 const DAILY_PRODUCTS = ["images","video"];
-function hasDaily(){ return DAILY_PRODUCTS.indexOf(state.product)>=0; }
+function hasDaily(){ return DAILY_PRODUCTS.indexOf(state.product)>=0 || isRaw(); }   /* raw 360 has days too */
 function normGran(v){
   const g=String(v==null?"":v).trim().toLowerCase();
   if(/^da(y|ily)/.test(g)) return "day";   /* "day" and "daily" */
@@ -697,11 +770,17 @@ async function loadAll(){
   if(!prod||prod.status!=="live"||!prod.lanes.length) return;
   state.loading=true; state.error=null; render();
   try{
-    const results=await Promise.all(prod.lanes.map(l=>loadSheet(laneSheet(l))));
-    prod.lanes.forEach((l,i)=>{ state.data[key(l.id)]=results[i]; });
+    if(rawOn(prod)){
+      await loadRaw(prod);
+      computeRaw();
+    } else {
+      const results=await Promise.all(prod.lanes.map(l=>loadSheet(laneSheet(l))));
+      prod.lanes.forEach((l,i)=>{ state.data[key(l.id)]=results[i]; });
+    }
     if(!state.regionsInit[state.product]){
       allRegions().forEach(r=>regSet().add(r));
       state.regionsInit[state.product]=true;
+      if(rawOn(prod)) computeRaw();
     }
     await ensureByRegion();
     state.extras[prod.id]=await loadExtra(prod);
@@ -714,11 +793,16 @@ async function loadAll(){
     if(state.cost) state.cost.forEach(function(r){
       if(r.latest && (!state.costLatest || r.latest>state.costLatest)) state.costLatest=r.latest;
     });
-    state.synced=new Date();
+    state.synced=(rawOn(prod) && state.rawSynced) ? state.rawSynced : new Date();
     if(isAdmin() && LOGIN_LOG && LOGIN_LOG.sheetName){
       try{ state.loginLog=await loadLoginLog(); }catch(e){ state.loginLog=null; }
     }
-  }catch(err){ state.error=err.message||String(err); }
+  }catch(err){
+    const m=err.message||String(err);
+    state.error = m==="NO_ACCESS" ? "Your account isn\u2019t on the 360 Tracker dashboard\u2019s access list, so its 360 data can\u2019t be shown here. Ask the 360 dashboard owner to add you."
+                : m==="SIGN_IN"   ? "Your sign-in has expired for the 360 data. Sign out and sign in again."
+                : m;
+  }
   state.loading=false; render();
 }
 
@@ -1001,7 +1085,7 @@ async function loadExtra(prod){
   const out={};
   const seen={};
   const unique=all.filter(function(p){
-    if(!p.sheet || seen[p.sheet]) return false;
+    if((p.raw && rawOn(prod)) || !p.sheet || seen[p.sheet]) return false;
     seen[p.sheet]=true; return true;
   });
   await Promise.all(unique.map(async function(p){
@@ -1054,10 +1138,31 @@ function extraHTML(){
   if(!prod || !prod.panels || !prod.panels.length) return "";
   const pct=v=>(v==null?"\u2014":(v*100).toFixed(2)+"%");
   const periodsNow=periodsOf();
-  const latestPeriod=periodsNow.length?periodsNow[periodsNow.length-1]:null;
+  let latestPeriod=periodsNow.length?periodsNow[periodsNow.length-1]:null;
+  /* Raw 360: the reasons show one period at a time, picked in the section header (as on the
+     360 dashboard's Reports tab); the latest one until another is picked. */
+  if(rawOn(prod) && periodsNow.indexOf(state.issuesPeriod[prod.id])>=0) latestPeriod=state.issuesPeriod[prod.id];
   let filtered=false;
+  const rawIss = (rawOn(prod) && latestPeriod && state.rawRows[prod.id])
+    ? Engine360.issues(state.rawRows[prod.id], rawFilters(), latestPeriod, state.granularity, state.segment) : null;
   const cards=prod.panels.map(function(p){
     let rows = p.rows || (state.extras[state.product] && state.extras[state.product][p.sheet]) || null;
+    let rawHead=null;
+    if(p.raw && rawOn(prod)){
+      if(!rawIss) return "";
+      /* Every not-delivered spin is in exactly one card; shares are of every spin (the Fulfilment
+         base), so the four cards add up to 100 \u2212 Fulfilment. QC lists issues (a spin can have
+         more than one blocker) but its header counts spins. */
+      const map = p.cat==="QC Failed" ? rawIss.qcReasons : p.cat==="Validation Failed" ? rawIss.valReasons
+                : p.cat==="Not delivered yet" ? rawIss.notYet : rawIss.techReasons;
+      const base = rawIss.total || 0;
+      const n = p.cat==="QC Failed" ? rawIss.qcSkus : Object.values(map).reduce((a,b)=>a+b,0);
+      rawHead = { n:n, rate: base ? n/base : 0,
+        issues: p.cat==="QC Failed" ? Object.values(map).reduce((a,b)=>a+b,0) : null };
+      rows = Object.entries(map).sort((a,b)=>b[1]-a[1]).map(([label,count])=>({ pt:state.granularity, p:latestPeriod, cat:p.cat,
+        label:label, count:count, pct: base ? count/base : null }));
+      if(!rows.length) rows=[{ pt:state.granularity, p:"\u2014none\u2014", cat:p.cat, label:"", count:0, pct:null }];
+    }
     if(!rows) return "";
 
     if(p.kind==="table"){
@@ -1089,7 +1194,7 @@ function extraHTML(){
       filtered=true;
       if(!rows.length) return '<section class="rcard"><div class="rcard-hd"><h3>'+esc(p.title)+'</h3></div>'+
         '<p style="margin:10px 0 14px;font-size:13px;color:var(--muted)">Nothing recorded for '+
-        esc(latestPeriod||"this period")+'.</p></section>';
+        esc(rawOn(prod) ? periodLabel(latestPeriod||"").toLowerCase() : (latestPeriod||"this period"))+'.</p></section>';
     }
     if(!rows.length) return "";
     if(p.kind==="log"){
@@ -1103,9 +1208,9 @@ function extraHTML(){
         '<span class="rcard-rate" style="font-size:13px;color:var(--muted)">'+rows.length+
         ' logged</span></div><ul class="evs">'+items+'</ul></section>';
     }
-    const tone = p.tone==="amber" ? "var(--warn)" : "var(--down)";
-    const rate = p.rate!=null ? p.rate : rows.reduce((a,r)=>a+(r.pct||0),0);
-    const total= p.total!=null ? p.total : rows.reduce((a,r)=>a+(r.count||0),0);
+    const tone = p.tone==="amber" ? "var(--warn)" : p.tone==="muted" ? "var(--muted)" : "var(--down)";
+    const rate = rawHead ? rawHead.rate : p.rate!=null ? p.rate : rows.reduce((a,r)=>a+(r.pct||0),0);
+    const total= rawHead ? rawHead.n : p.total!=null ? p.total : rows.reduce((a,r)=>a+(r.count||0),0);
     const max  = Math.max.apply(null, rows.map(r=>r.count||0)) || 1;
     const body = rows.map(function(r){
       return '<li class="rsn"><div class="rsn-top"><span class="rsn-lab">'+esc(r.label)+'</span>'+
@@ -1116,15 +1221,20 @@ function extraHTML(){
     }).join("");
     return '<section class="rcard"><div class="rcard-hd">'+
       '<h3>'+esc(p.title)+'</h3><span class="rcard-rate" style="color:'+tone+'">'+pct(rate)+'</span></div>'+
-      '<div class="rcard-sub"><span>'+esc(p.subtitle||"")+' \u00b7 all reasons</span>'+
-      '<span>of reviewed \u00b7 '+total.toLocaleString("en-IN")+'</span></div>'+
+      '<div class="rcard-sub"><span>'+esc(p.subtitle||"")+(rawHead && rawHead.issues>rawHead.n
+          ? ' \u00b7 '+rawHead.issues.toLocaleString("en-IN")+' issues on '+rawHead.n.toLocaleString("en-IN")+' spins'
+          : (p.cat==="Not delivered yet" && rawHead ? '' : ' \u00b7 all reasons'))+'</span>'+
+      '<span>'+(rawHead?'of all spins':'of reviewed')+' \u00b7 '+total.toLocaleString("en-IN")+'</span></div>'+
       '<ul class="rsns'+(p.noCap?" rsns--all":"")+'">'+body+'</ul></section>';
   }).join("");
   const shown=cards.split("<section").length-1;
   if(!cards.replace(/\s/g,"")) return "";
   return '<div class="sec"><h2>Fulfilment Gap Reasons</h2>'+
+    (rawOn(prod) && periodsNow.length ? '<select class="sec-sel" id="issPeriod" aria-label="Period for the reasons">'+
+      periodsNow.slice().reverse().map(x=>'<option value="'+esc(x)+'"'+(x===latestPeriod?' selected':'')+'>'+esc(periodLabel(x))+'</option>').join("")+
+    '</select>' : '')+
     '<span class="note">'+(filtered
-      ? esc(periodName(latestPeriod||""))+' \u00b7 follows the period filter'
+      ? esc(rawOn(prod)?periodLabel(latestPeriod||""):periodName(latestPeriod||""))+(rawOn(prod)?' \u00b7 follows every filter above \u00b7 the cards add up to the spins not delivered':' \u00b7 follows the period filter')
       : 'Fixed \u2014 not affected by the filters above')+'</span></div>'+
     '<div class="rgrid" style="--cols:'+Math.max(1,shown)+'">'+cards+'</div>';
 }
@@ -1296,6 +1406,7 @@ function rowsFor(laneId){
   return laneSetRows(laneId, raw(laneId)).filter(r=>r.granularity===state.granularity).sort(comparePeriods);
 }
 function laneSetRows(laneId, rows){
+  if(isRaw()) return rows;   /* raw: the lanes are recomputed for the selected regions */
   /* VIN/Spin and Rooftop follow the region chips. Images keeps every set of regions in the lane's
      own sheet (region_set column, one row per set incl. all regions); 360 and Video keep the subsets
      in a separate <sheet>_byregion tab. */
@@ -1315,6 +1426,9 @@ function laneSetRows(laneId, rows){
   return rows;
 }
 function allRegions(){
+  /* Raw 360: every region in the data, so the chips (and the region filter) never depend on what
+     the other filters leave in the Region lane — e.g. after Source "Clear all" empties it. */
+  if(isRaw() && state.rawRows[state.product]) return Engine360.values(state.rawRows[state.product],'region');
   const s=new Set();
   raw("region").forEach(r=>{ if(r.region) s.add(r.region); });
   return [...s].sort();
@@ -1334,8 +1448,9 @@ function regionKey(){
 function brKey(laneId){ return key(laneId)+"@byregion"; }
 /* null = this product's sheet has no region split yet; the lane then stays on all regions. */
 function hasInlineSets(laneId){ return raw(laneId).some(r=>r.regionSet); }
-function regionSplitMissing(laneId){ return laneId!=="region" && !!regionKey() && !hasInlineSets(laneId) && state.data[brKey(laneId)]===null; }
+function regionSplitMissing(laneId){ if(isRaw()) return false; return laneId!=="region" && !!regionKey() && !hasInlineSets(laneId) && state.data[brKey(laneId)]===null; }
 async function ensureByRegion(){
+  if(isRaw()) return false;
   if(!regionKey()) return false;
   const lanes=lanesOf().filter(l=>l.dim!=="region" && !hasInlineSets(l.id) && state.data[brKey(l.id)]===undefined);
   if(!lanes.length) return false;
@@ -1397,17 +1512,20 @@ function aggSeries(laneId, colName, mode, regionsOverride, skipZero){
     return mode==="sum" ? total : total/a.length;
   });
 }
-/* Count columns aren't segment-prefixed in every sheet, so try both. */
+/* Segment count columns are named two ways, so try both. With a segment selected and no
+   column for it, return nothing rather than the all-segment count - that showed the wrong
+   segment's Total/Delivered in the fulfilment tooltip and bars. */
 function countSeries(laneId, name, prefix, regionsOverride){
   const px = prefix!=null ? prefix : segPrefix();
   if(px){
-    /* ent_total_in (images) and total_ent_vin (360) are both in use. */
+    /* ent_total_in / ent_total_videos (images, video) and total_ent_vin (360) are both in use. */
     const tries=[ px+name, name.replace(/^total_/, "total_"+px) ];
     for(let i=0;i<tries.length;i++){
       if(tries[i]===name) continue;
       const got=aggSeries(laneId, tries[i], "sum", regionsOverride);
       if(got.some(v=>v!=null)) return got;
     }
+    return periodsOf().map(()=>null);
   }
   return aggSeries(laneId, name, "sum", regionsOverride);
 }
@@ -1419,8 +1537,7 @@ function tipCounts(laneId, metric, regionsOverride){
   const px=segPrefix();
   const n=aggSeries(laneId, px+metric.tip.n, "sum", regionsOverride);
   const bad=aggSeries(laneId, px+metric.tip.bad, "sum", regionsOverride);
-  const tot=metric.tip.total ? aggSeries(laneId, px+metric.tip.total, "sum", regionsOverride) : null;
-  return n.some(v=>v!=null) ? { n:n, bad:bad, tot:tot } : null;
+  return n.some(v=>v!=null) ? { n:n, bad:bad } : null;
 }
 /* Same layout as the fulfilment tooltip: period, the counts, then the value.
    Rooftop cards count rooftops, everything else counts SKUs. */
@@ -1432,11 +1549,7 @@ function tipHTML(metric, lab, v, counts, i, unit){
     n!=null?line(t.nLabel, num(n)):null,
     (n!=null&&bad!=null)?line(t.goodLabel, num(n-bad)):null,
     bad!=null?line(t.badLabel, num(bad)):null,
-    v!=null?line(esc(metric.label), fmt(metric,v)):null,
-    /* In-progress period: SKUs received too recently to judge. SKU lanes only -
-       rooftop SLA counts rooftops, so the fulfilment total is not comparable. */
-    (t.total && !unit && /^MTD\b/.test(String(lab)) && counts && counts.tot && counts.tot[i]!=null && n!=null && counts.tot[i]-n>0)
-      ? '<span style="color:#9DB4B1">+'+num(counts.tot[i]-n)+' received in the last 6h, not judged yet</span>' : null ].filter(Boolean).join("<br>").replace(/"/g,"&quot;");
+    v!=null?line(esc(metric.label), fmt(metric,v)):null ].filter(Boolean).join("<br>").replace(/"/g,"&quot;");
 }
 function metricSeries(laneId, metric, prefix, regionsOverride){
   if(metric.src==="bq") return costSeries(laneId, metric, prefix, regionsOverride);
@@ -1502,6 +1615,17 @@ function periodName(p){
               "W-1":"This week","W-2":"Last week","W-3":"2 weeks back","W-4":"3 weeks back" };
   return map[p]||p;
 }
+/* 360 names: W-1 is the last complete Mon–Sun week (the week in progress is left out), so it is
+   "Last week", not "This week". Images and Video keep periodName. */
+const RAW_WEEK_NAMES = { "W-1":"Last week", "W-2":"2 weeks back", "W-3":"3 weeks back", "W-4":"4 weeks back" };
+function periodLabel(p){
+  if(RAW_WEEK_NAMES[p]) return RAW_WEEK_NAMES[p];
+  const d=/^D-(\d+)$/.exec(String(p));
+  if(!d) return periodName(p);
+  const row=raw(lanesOf()[0].id).find(r=>r.period===p);
+  const dt=row && row.date ? ' ('+row.date.getUTCDate()+'/'+(row.date.getUTCMonth()+1)+')' : '';   /* periods are UTC days */
+  return (d[1]==='1' ? 'Yesterday' : d[1]+' days back')+dt;
+}
 function esc(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
 
 /* ---------- svg charts ---------- */
@@ -1541,9 +1665,7 @@ function sparkCombo(pctSeries, metric, labels, num, den){
   const pv=pctSeries.filter(v=>v!=null);
   const cv=den.concat(num).filter(v=>v!=null);
   if(!pv.length || !cv.length) return sparkline(pctSeries, metric, labels);
-  const W=268,H=140,padB=20,padL=26,padR=32;
-  const _lp=Math.max.apply(null, pv.map(v=>fmt(metric,v).length));
-  const padT=Math.max(24, 8+_lp*BAR_LABEL_FS*0.6);
+  const W=268,H=140,padB=20,padL=26,padR=32,padT=24;
   const base=H-padB, n=labels.length, inner=W-padL-padR;
   const pr=niceRange(metric, Math.min.apply(null,pv), Math.max.apply(null,pv));
   const pspan=(pr.hi-pr.lo)||1;
@@ -1602,7 +1724,10 @@ function sparkCombo(pctSeries, metric, labels, num, den){
     const c=toneColor(k===0?stepTone(metric,pts[1]?p[3]:null,pts[1]?pts[1][3]:null):stepTone(metric,pts[k-1][3],p[3]));
     svg+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="'+(k===pts.length-1?3.2:2.2)+
          '" fill="'+(k===pts.length-1?c:"var(--panel)")+'" stroke="'+c+'" stroke-width="1.6"/>';
-    svg+=barLabel(p[0], p[1], fmt(metric,p[3]), c);
+    /* Combo is dual-axis and dense - the % line sits over the count bars, so its
+       labels stay compact and horizontal; vertical ones collided with the bars. */
+    svg+='<text x="'+p[0].toFixed(1)+'" y="'+Math.max(9,p[1]-6).toFixed(1)+'" text-anchor="middle" '+
+         'font-size="8.5" font-weight="600" fill="'+c+'">'+fmt(metric,p[3])+'</text>';
   });
   labels.forEach((lab,i)=>{
     svg+='<text x="'+x(i).toFixed(1)+'" y="'+(H-5)+'" text-anchor="middle" font-size="'+AXIS_LABEL_FS+'" fill="var(--muted)">'+esc(lab)+'</text>';
@@ -1981,8 +2106,12 @@ function pipeHTML(){
     }
   });
   body+=row("End-to-End",r.e2e_p90_hrs,r.e2e_p95_hrs,r.e2e_p99_hrs,r.e2e_avg_hrs,100,r.e2e_n,"tot");
-  const tot=+r.e2e_n||1, mix=[["FTP / partner publish",r.delivered_ftp_n],["API webhook",r.delivered_api_n],["At QC done (no push)",r.delivered_qc_done_n]]
-    .map(m=>'<span>'+m[0]+' <b class="num">'+n(m[1])+'</b> ('+(100*(+m[1]||0)/tot).toFixed(1)+'%)</span>').join("");
+  /* The fourth group is what the three channel counts leave out: QC'd SKUs whose feed push was logged before
+     QC done. Per the delivery rule they count as delivered at QC done (card 13272 labels them separately). */
+  const early=Math.max(0,(+r.e2e_n||0)-(+r.delivered_ftp_n||0)-(+r.delivered_api_n||0)-(+r.delivered_qc_done_n||0));
+  const tot=+r.e2e_n||1, mix=[["FTP / partner publish",r.delivered_ftp_n],["API webhook",r.delivered_api_n],["At QC done, no push",r.delivered_qc_done_n],
+    ["At QC done, pushed before QC",early,"Feed push was logged before QC finished, so the SKU counts as delivered at QC done"]]
+    .map(m=>'<span'+(m[2]?' title="'+esc(m[2])+'"':'')+'>'+m[0]+' <b class="num">'+n(m[1])+'</b> ('+(100*(+m[1]||0)/tot).toFixed(1)+'%)</span>').join("");
 
   /* P95 by stage, week by week */
   const weeks=["W-4","W-3","W-2","W-1"], wk=weeks.map(w=>rows.find(x=>x.period===w)||{});
@@ -2029,12 +2158,14 @@ function render(){
   if(!laneById(state.matrixLane))  state.matrixLane=lanesOf()[0].id;
   if(!laneById(state.recordsLane)){ state.recordsLane=lanesOf()[0].id; state.sortCol=null; }
   if(state.loading && !raw(lanesOf()[0].id).length){
-    main.innerHTML='<div class="state" style="margin-top:32px"><h3>Pulling the workbook</h3><p>Reading images_vin, images_rt and images_region.</p></div>';
+    main.innerHTML = isRaw()
+      ? '<div class="state" style="margin-top:32px"><h3>Reading the 360 data</h3><p>Loading every spin from the 360 Tracker dashboard and working out the numbers \u2014 this takes a few seconds.</p></div>'
+      : '<div class="state" style="margin-top:32px"><h3>Pulling the workbook</h3><p>Reading images_vin, images_rt and images_region.</p></div>';
     return;
   }
   if(state.error){
-    main.innerHTML='<div class="state" style="margin-top:32px"><h3>Couldn\u2019t read the sheet</h3><p>'+esc(state.error)+
-      '</p><p style="margin-top:10px">The workbook has to be shared as \u201cAnyone with the link \u2014 Viewer\u201d for this page to read it.</p>'+
+    main.innerHTML='<div class="state" style="margin-top:32px"><h3>'+(isRaw()?'Couldn\u2019t read the 360 data':'Couldn\u2019t read the sheet')+'</h3><p>'+esc(state.error)+
+      '</p>'+(isRaw()?'':'<p style="margin-top:10px">The workbook has to be shared as \u201cAnyone with the link \u2014 Viewer\u201d for this page to read it.</p>')+
       '<button class="btn" id="retryBtn">Try again</button></div>';
     document.getElementById("retryBtn").onclick=loadAll;
     return;
@@ -2043,6 +2174,13 @@ function render(){
   /* The page ends after the fixed panels. Trend, drill-down and the admin
      blocks are still built by the functions below - add them back to this list
      to restore them. */
+  const nothing = isRaw() && rawNothingSelected();
+  if(nothing){
+    main.innerHTML = controlsHTML() +
+      '<div class="state" style="margin-top:16px"><h3>Nothing selected</h3><p>'+esc(nothing)+'</p></div>';
+    wire(); syncSticky();
+    return;
+  }
   main.innerHTML =
     controlsHTML() +
     glanceHTML() +
@@ -2090,7 +2228,7 @@ function renderSync(){
   btn.disabled=state.loading;
   btn.textContent=state.loading?"Refreshing\u2026":"Refresh data";
   if(state.error) el.innerHTML='<span class="dot err"></span>Sheet unreachable';
-  else if(state.loading) el.innerHTML='<span class="dot"></span>Reading the workbook\u2026';
+  else if(state.loading) el.innerHTML='<span class="dot"></span>'+(isRaw()?'Reading the 360 data\u2026':'Reading the workbook\u2026');
   else if(state.synced) el.innerHTML='<span class="dot"></span>Synced '+state.synced.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})+
        ' \u00b7 '+state.synced.toLocaleDateString("en-IN",{day:"numeric",month:"short"});
   else el.innerHTML='<span class="dot"></span>Ready';
@@ -2114,6 +2252,22 @@ function controlsHTML(){
           '<button data-vf="1" aria-pressed="'+state.includeVF+'">Included</button>'+
         '</div></div>'
       : '')+
+    (isRaw() && state.rawRows[state.product] ? (function(){
+      const types=rawAll('type'), srcs=rawAll('source');
+      const tSel=state.rawTypes[state.product], sSel=state.rawSources[state.product];
+      const n=sSel.size, lab = n===0 ? 'No sources selected' : n===srcs.length ? 'All sources'
+        : n===1 ? esc([...sSel][0]||'(blank)') : n+' sources <span class="msel-pill">'+(srcs.length-n)+' hidden</span>';
+      return '<div class="ctl"><span>Input Type</span><div class="chips">'+
+          types.map(t=>'<button class="chip" data-rtype="'+esc(t)+'" aria-pressed="'+tSel.has(t)+'">'+esc(t)+'</button>').join("")+'</div></div>'+
+        '<div class="ctl"><span>Source</span><div class="msel" id="srcMs">'+
+          '<button class="msel-btn" id="srcBtn" aria-haspopup="true" aria-expanded="'+state.srcOpen+'"><span>'+lab+'</span>'+
+            '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="2,4 6,8 10,4"/></svg></button>'+
+          (state.srcOpen ? '<div class="msel-pop" role="dialog" aria-label="Source"><div class="msel-acts">'+
+              '<button class="linky" data-srcact="all">Select all</button><button class="linky" data-srcact="none" style="color:var(--muted)">Clear all</button></div>'+
+              srcs.map(v=>'<label><input type="checkbox" data-rsrc="'+esc(v)+'"'+(sSel.has(v)?' checked':'')+'> '+esc(v||'(blank)')+'</label>').join("")+
+            '</div>' : '')+
+        '</div></div>';
+    })() : '')+
     (COST && !state.cost ? '<div class="ctl"><button class="chip" id="bqBtn"'+
        (state.costError ? ' title="'+esc(state.costError)+'"' : '')+'>'+
        (state.costError ? "Cost unavailable \u2014 retry" : "Connect BigQuery for cost")+'</button>'+
@@ -2133,7 +2287,7 @@ function glanceHTML(){
   const lanes=lanesOf(), ms=metricsOf().filter(m=>!state.hiddenCards.has(m.id));
 
   let html='<div class="sec"><h2>At a glance</h2><span class="note">'+
-    esc(periodName(latest))+' \u00b7 '+esc(segLabel)+' \u00b7 change is against the period before it'+
+    esc(isRaw()?periodLabel(latest):periodName(latest))+' \u00b7 '+esc(segLabel)+' \u00b7 change is against the period before it'+
     (state.costLatest ? ' \u00b7 <b style="color:var(--warn)">cost data only to '+
        esc(new Date(state.costLatest+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short"}))+
        '</b>' : '')+'</span>'+
@@ -2493,13 +2647,20 @@ function loginLogHTML(){
 
 function footHTML(){
   return '<div class="foot">'+
-    '<span>Source: <a href="'+SHEET_URL+'" target="_blank" rel="noopener">Delivery Metrics workbook</a> \u2014 '+
-      esc(lanesOf().map(laneSheet).join(", "))+'</span>'+
+    (isRaw()
+      ? '<span>Source: <a href="'+curProduct().raw.base+'" target="_blank" rel="noopener">360 Tracker dashboard</a> data, '+
+          'computed with engine-360.js ('+esc(Engine360.version)+'), the same calculation as its Reports tab</span>'
+      : '<span>Source: <a href="'+SHEET_URL+'" target="_blank" rel="noopener">Delivery Metrics workbook</a> \u2014 '+
+          esc(lanesOf().map(laneSheet).join(", "))+'</span>')+
     '<span>Percentages are 0\u2013100. TAT is in hours.</span>'+
     '<span>Cost / revenue isn\u2019t in these sheets yet.</span></div>';
 }
 
 /* ---------- events ---------- */
+document.addEventListener("click", e=>{
+  if(state.srcOpen && !(e.target.closest && e.target.closest("#srcMs"))){ state.srcOpen=false; render(); }
+});
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && state.srcOpen){ state.srcOpen=false; render(); } });
 function wire(){
   const bqb=document.getElementById("bqBtn");
   if(bqb) bqb.onclick=async()=>{
@@ -2529,6 +2690,7 @@ function wire(){
     const r=b.dataset.region;
     if(regSet().has(r)) regSet().delete(r); else regSet().add(r);
     if(state.drillRegion&&!regSet().has(state.drillRegion)) state.drillRegion=null;
+    if(isRaw()) computeRaw();
     render();
     ensureByRegion().then(loaded=>{ if(loaded) render(); });
   });
@@ -2536,9 +2698,32 @@ function wire(){
   if(ra) ra.onclick=()=>{
     const all=allRegions();
     if(regSet().size===all.length) regSet().clear(); else all.forEach(r=>regSet().add(r));
+    if(isRaw()) computeRaw();
     render();
     ensureByRegion().then(loaded=>{ if(loaded) render(); });
   };
+  /* 360 raw filters: Input Type capsules and the Source dropdown narrow the spins, then the lanes
+     are recomputed (the dropdown stays open while ticking). */
+  document.querySelectorAll("[data-rtype]").forEach(b=>b.onclick=()=>{
+    const s=state.rawTypes[state.product], t=b.dataset.rtype;
+    if(s.has(t)) s.delete(t); else s.add(t);
+    computeRaw(); render();
+  });
+  const ip=document.getElementById("issPeriod");
+  if(ip) ip.onchange=()=>{ state.issuesPeriod[state.product]=ip.value; render(); };
+  const sb=document.getElementById("srcBtn");
+  if(sb) sb.onclick=(e)=>{ e.stopPropagation(); state.srcOpen=!state.srcOpen; render(); };
+  document.querySelectorAll("[data-rsrc]").forEach(cb=>cb.onchange=()=>{
+    const s=state.rawSources[state.product], t=cb.dataset.rsrc;
+    if(cb.checked) s.add(t); else s.delete(t);
+    computeRaw(); render();
+  });
+  document.querySelectorAll("[data-srcact]").forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();
+    const s=state.rawSources[state.product];
+    if(b.dataset.srcact==="all") rawAll('source').forEach(x=>s.add(x)); else s.clear();
+    computeRaw(); render();
+  });
   document.querySelectorAll("[data-tm]").forEach(b=>b.onclick=()=>{ state.trendMetric=b.dataset.tm; render(); });
   document.querySelectorAll("[data-split]").forEach(b=>b.onclick=()=>{ state.trendSplit=b.dataset.split; state.hidden.clear(); render(); });
   document.querySelectorAll("[data-cmode]").forEach(b=>b.onclick=()=>{ state.colorMode=b.dataset.cmode; render(); });
