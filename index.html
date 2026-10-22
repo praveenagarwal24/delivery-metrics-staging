@@ -1657,9 +1657,13 @@ function regionColor(r){
    axis - so VIN, Rooftop and Region read identically. Values are drawn vertical
    (rotate -90) above the bar so adjacent numbers never crowd each other. */
 const BAR_LABEL_FS=7.5, AXIS_LABEL_FS=10;
+/* A panel-coloured outline painted behind the glyphs, so a line or bar passing
+   under a value label is masked right around the digits and the number stays
+   readable instead of being cut through. */
+const LABEL_HALO='paint-order="stroke" stroke="var(--panel)" stroke-width="2.6" stroke-linejoin="round" ';
 function barLabel(cx, topY, text, color, fs){
   return '<text transform="translate('+(+cx).toFixed(1)+','+(+topY-4).toFixed(1)+') rotate(-90)" '+
-    'text-anchor="start" font-size="'+(fs||BAR_LABEL_FS)+'" font-weight="600" fill="'+color+'">'+text+'</text>';
+    LABEL_HALO+'text-anchor="start" font-size="'+(fs||BAR_LABEL_FS)+'" font-weight="600" fill="'+color+'">'+text+'</text>';
 }
 function sparkCombo(pctSeries, metric, labels, num, den){
   const pv=pctSeries.filter(v=>v!=null);
@@ -1820,7 +1824,7 @@ function sparkMulti(seriesList, metric, labels){
       if(ly<9) return;
       if(placed.some(q=>Math.abs(q[0]-p[0])<26 && Math.abs(q[1]-ly)<7)) return;
       placed.push([p[0],ly]);
-      svg+='<text x="'+p[0].toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="middle" font-size="'+BAR_LABEL_FS+'" '+
+      svg+='<text x="'+p[0].toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="middle" '+LABEL_HALO+'font-size="'+BAR_LABEL_FS+'" '+
            'font-weight="600" fill="'+c+'">'+fmt(metric,p[3])+'</text>';
     });
   });
@@ -1910,7 +1914,7 @@ function sparkline(series,metric,labels,counts,unit){
     svg+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="'+(isLast?3.6:2.3)+
          '" fill="'+(isLast?c:"var(--panel)")+'" stroke="'+c+'" stroke-width="1.8"/>';
     svg+='<text x="'+p[0].toFixed(1)+'" y="'+Math.max(11,p[1]-9).toFixed(1)+
-         '" text-anchor="middle" font-size="'+BAR_LABEL_FS+'" font-weight="'+(isLast?"700":"600")+
+         '" text-anchor="middle" '+LABEL_HALO+'font-size="'+BAR_LABEL_FS+'" font-weight="'+(isLast?"700":"600")+
          '" fill="'+(k===0?"var(--ink-2)":c)+'">'+fmt(metric,series[p[2]])+'</text>';
   });
   }
