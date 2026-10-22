@@ -783,20 +783,27 @@ async function loadAll(){
       if(rawOn(prod)) computeRaw();
     }
     await ensureByRegion();
-    state.extras[prod.id]=await loadExtra(prod);
-    if(prod.pipeline) state.pipes[prod.id]=await loadPipe(prod.pipeline.sheet).catch(()=>null);
-    state.programs=await loadPrograms();
-    state.qualities[prod.id]=await loadQuality(prod);
-    state.costError=null;
-    state.cost=await loadCost();
-    state.costLatest=null;
-    if(state.cost) state.cost.forEach(function(r){
-      if(r.latest && (!state.costLatest || r.latest>state.costLatest)) state.costLatest=r.latest;
-    });
+    /* The core cards only need the lane data, which is ready now - paint them
+       immediately. Everything else (quality, incidents, programs, pipeline, cost,
+       login log) loads in parallel and re-renders as each arrives, instead of a
+       slow sequential waterfall gated on the BigQuery cost query. */
     state.synced=(rawOn(prod) && state.rawSynced) ? state.rawSynced : new Date();
-    if(isAdmin() && LOGIN_LOG && LOGIN_LOG.sheetName){
-      try{ state.loginLog=await loadLoginLog(); }catch(e){ state.loginLog=null; }
-    }
+    state.loading=false; render();
+    const paint=()=>render();
+    state.costError=null;
+    const jobs=[
+      loadExtra(prod).then(function(r){ state.extras[prod.id]=r; }, function(){ state.extras[prod.id]=null; }),
+      loadPrograms().then(function(r){ state.programs=r; }, function(){}),
+      loadQuality(prod).then(function(r){ state.qualities[prod.id]=r; }, function(){ state.qualities[prod.id]=null; }),
+      loadCost().then(function(r){
+        state.cost=r; state.costLatest=null;
+        if(r) r.forEach(function(x){ if(x.latest && (!state.costLatest || x.latest>state.costLatest)) state.costLatest=x.latest; });
+      }, function(){})
+    ];
+    if(prod.pipeline) jobs.push(loadPipe(prod.pipeline.sheet).catch(function(){ return null; }).then(function(r){ state.pipes[prod.id]=r; }));
+    if(isAdmin() && LOGIN_LOG && LOGIN_LOG.sheetName)
+      jobs.push(loadLoginLog().then(function(r){ state.loginLog=r; }, function(){ state.loginLog=null; }));
+    await Promise.allSettled(jobs.map(function(j){ return j.then(paint); }));
   }catch(err){
     const m=err.message||String(err);
     state.error = m==="NO_ACCESS" ? "Your account isn\u2019t on the 360 Tracker dashboard\u2019s access list, so its 360 data can\u2019t be shown here. Ask the 360 dashboard owner to add you."
