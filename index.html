@@ -1673,10 +1673,9 @@ function sparkCombo(pctSeries, metric, labels, num, den){
   /* Reserve a band at the top for the vertical value labels, so they sit clear
      above the count bars and the % line instead of colliding with them. */
   const _lp=Math.max.apply(null, pv.map(v=>fmt(metric,v).length));
-  /* Top-band labels are on Images only for now (staging preview); other products
-     keep the compact top padding until we decide to roll it out. */
-  const topBand = state.product==="images";
-  const padT = topBand ? Math.max(28, 8+_lp*BAR_LABEL_FS*0.62) : 24;
+  /* Reserve a band at the top for the vertical value labels, so they sit clear
+     above the count bars and the % line instead of colliding with them. */
+  const padT = Math.max(28, 8+_lp*BAR_LABEL_FS*0.62);
   const base=H-padB, n=labels.length, inner=W-padL-padR;
   const pr=niceRange(metric, Math.min.apply(null,pv), Math.max.apply(null,pv));
   const pspan=(pr.hi-pr.lo)||1;
@@ -1735,10 +1734,9 @@ function sparkCombo(pctSeries, metric, labels, num, den){
     const c=toneColor(k===0?stepTone(metric,pts[1]?p[3]:null,pts[1]?pts[1][3]:null):stepTone(metric,pts[k-1][3],p[3]));
     svg+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="'+(k===pts.length-1?3.2:2.2)+
          '" fill="'+(k===pts.length-1?c:"var(--panel)")+'" stroke="'+c+'" stroke-width="1.6"/>';
-    /* Images: label goes in the top band (aligned over its bar), not on the point,
-       so the vertical number never overlaps the count bar or the % line below it.
-       Other products keep the at-point label for now. */
-    svg+=barLabel(p[0], topBand ? padT-2 : p[1], fmt(metric,p[3]), c);
+    /* Label goes in the top band (aligned over its bar), not on the point, so the
+       vertical number never overlaps the count bar or the % line below it. */
+    svg+=barLabel(p[0], padT-2, fmt(metric,p[3]), c);
   });
   labels.forEach((lab,i)=>{
     svg+='<text x="'+x(i).toFixed(1)+'" y="'+(H-5)+'" text-anchor="middle" font-size="'+AXIS_LABEL_FS+'" fill="var(--muted)">'+esc(lab)+'</text>';
